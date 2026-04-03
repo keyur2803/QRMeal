@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL - Kitchen Display System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body {
+    background: linear-gradient(180deg, #0b1220, #0f172a);
+    min-height: 100vh;
+    color: var(--white);
+    font-family: var(--font);
+  }
+
+  .kds {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .kds-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(15, 23, 42, 0.88);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    flex-shrink: 0;
+  }
+
+  .kds-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .kds-title h1 {
+    margin: 0;
+    color: var(--teal-400);
+    letter-spacing: 1px;
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .kds-sub {
+    font-size: 12px;
+    color: var(--slate-400);
+    font-weight: 500;
+  }
+
+  .kds-summary {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .chip {
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .chip.pending { color: var(--teal-300); }
+  .chip.preparing { color: var(--amber-400); }
+  .chip.ready { color: #34d399; }
+
+  .clock {
+    font-size: 12px;
+    color: var(--slate-300);
+    font-weight: 600;
+    padding-left: 8px;
+  }
+
+  .kds-guide {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    font-size: 12px;
+    color: var(--slate-400);
+    flex-shrink: 0;
+  }
+
+  .kds-board {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(270px, 1fr));
+    gap: 14px;
+    padding: 14px;
+    overflow: hidden;
+  }
+
+  .lane {
+    min-width: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.7);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .lane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 12px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .lane-title {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .lane.pending .lane-title { color: var(--teal-300); }
+  .lane.preparing .lane-title { color: var(--amber-400); }
+  .lane.ready .lane-title { color: #34d399; }
+
+  .lane-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .lane-drop {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .lane-drop.drag-over {
+    outline: 2px dashed var(--teal-400);
+    outline-offset: -4px;
+    background: rgba(45, 212, 191, 0.08);
+  }
+
+  .ticket {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.95);
+    cursor: grab;
+    user-select: none;
+  }
+
+  .ticket.dragging {
+    opacity: 0.5;
+    transform: scale(0.985);
+    cursor: grabbing;
+  }
+
+  .ticket-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .table {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .id {
+    font-size: 11px;
+    color: var(--slate-400);
+    margin-top: 3px;
+  }
+
+  .time {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .time.ok { color: var(--teal-300); }
+  .time.warn { color: var(--amber-400); }
+  .time.crit { color: var(--coral-400); }
+
+  .ticket-body {
+    padding: 10px 12px;
+  }
+
+  .item {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .item:last-child { border-bottom: 0; }
+
+  .item-name {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .item-mod {
+    font-size: 11px;
+    color: var(--slate-400);
+    margin-top: 2px;
+  }
+
+  .qty {
+    color: var(--slate-300);
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .note {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #fde68a;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 8px;
+    padding: 6px 8px;
+  }
+
+  .ticket-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 12px 12px;
+  }
+
+  .action {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 8px;
+    flex: 1;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+
+  .action:hover { transform: translateY(-1px); }
+  .action.start { background: var(--amber-400); color: #1f2937; }
+  .action.ready { background: #10b981; color: #052e16; }
+  .action.reset { background: rgba(255, 255, 255, 0.09); color: var(--slate-200); }
+  .action.serve { background: var(--teal-500); color: #032b29; }
+
+  .empty {
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    color: var(--slate-500);
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 8px;
+  }
+
+  @media (max-width: 1100px) {
+    .kds-board {
+      grid-template-columns: 1fr;
+      overflow-y: auto;
+    }
+    .lane { min-height: 280px; }
+  }
+</style>
+</head>
+<body>
+<div class="kds">
+  <header class="kds-header">
+    <div class="kds-title">
+      <h1>QRMEAL KDS</h1>
+      <div class="kds-sub">Fast Kitchen Flow</div>
+    </div>
+    <div class="kds-summary">
+      <div class="chip pending">Pending: <span id="countPending">0</span></div>
+      <div class="chip preparing">Preparing: <span id="countPreparing">0</span></div>
+      <div class="chip ready">Ready: <span id="countReady">0</span></div>
+      <div class="clock">Time: <span id="clock">--:--</span></div>
+    </div>
+  </header>
+
+  <div class="kds-guide">
+    <div>Drag any order card to move status quickly.</div>
+    <div>Tip: Use button actions for one-tap update while cooking.</div>
+  </div>
+
+  <main class="kds-board">
+    <section class="lane pending" data-lane="pending">
+      <div class="lane-head">
+        <div class="lane-title">Pending</div>
+        <div class="lane-count" id="lanePendingCount">0</div>
+      </div>
+      <div class="lane-drop" id="lanePending"></div>
+    </section>
+
+    <section class="lane preparing" data-lane="preparing">
+      <div class="lane-head">
+        <div class="lane-title">Preparing</div>
+        <div class="lane-count" id="lanePreparingCount">0</div>
+      </div>
+      <div class="lane-drop" id="lanePreparing"></div>
+    </section>
+
+    <section class="lane ready" data-lane="ready">
+      <div class="lane-head">
+        <div class="lane-title">Ready</div>
+        <div class="lane-count" id="laneReadyCount">0</div>
+      </div>
+      <div class="lane-drop" id="laneReady"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const orders = [
+    {
+      id: "QR-3012",
+      table: "T-12",
+      status: "pending",
+      time: "0:58",
+      note: "",
+      items: [
+        { name: "Buffalo Wings", mod: "Extra spicy", qty: 2 },
+        { name: "Garlic Bread", mod: "", qty: 1 }
+      ]
+    },
+    {
+      id: "QR-3010",
+      table: "T-05",
+      status: "preparing",
+      time: "8:43",
+      note: "Allergy: No nuts",
+      items: [
+        { name: "Grilled Salmon", mod: "No lemon", qty: 1 },
+        { name: "Lemonade", mod: "", qty: 2 }
+      ]
+    },
+    {
+      id: "QR-3008",
+      table: "T-09",
+      status: "preparing",
+      time: "14:10",
+      note: "",
+      items: [
+        { name: "Margherita Pizza", mod: "Extra cheese", qty: 2 },
+        { name: "Caesar Salad", mod: "No croutons", qty: 1 }
+      ]
+    },
+    {
+      id: "QR-3009",
+      table: "T-03",
+      status: "ready",
+      time: "11:52",
+      note: "",
+      items: [
+        { name: "Pasta Carbonara", mod: "", qty: 1 },
+        { name: "House Wine", mod: "", qty: 1 }
+      ]
+    },
+    {
+      id: "QR-3013",
+      table: "T-21",
+      status: "pending",
+      time: "0:20",
+      note: "",
+      items: [
+        { name: "Margherita Pizza", mod: "", qty: 1 },
+        { name: "Iced Tea", mod: "", qty: 2 }
+      ]
+    }
+  ];
+
+  const laneMap = {
+    pending: document.getElementById("lanePending"),
+    preparing: document.getElementById("lanePreparing"),
+    ready: document.getElementById("laneReady")
+  };
+
+  function timerClass(timeValue) {
+    const minutes = parseInt(timeValue.split(":")[0], 10);
+    if (minutes >= 12) return "crit";
+    if (minutes >= 7) return "warn";
+    return "ok";
+  }
+
+  function actionButtons(status, orderId) {
+    if (status === "pending") {
+      return '<button class="action start" data-next="preparing" data-id="' + orderId + '">Start</button>';
+    }
+    if (status === "preparing") {
+      return '<button class="action ready" data-next="ready" data-id="' + orderId + '">Mark Ready</button>' +
+        '<button class="action reset" data-next="pending" data-id="' + orderId + '">Back</button>';
+    }
+    return '<button class="action serve" data-next="pending" data-id="' + orderId + '">Served</button>';
+  }
+
+  function renderOrder(order) {
+    const card = document.createElement("article");
+    card.className = "ticket";
+    card.draggable = true;
+    card.dataset.id = order.id;
+    card.innerHTML =
+      '<div class="ticket-head">' +
+        '<div>' +
+          '<div class="table">' + order.table + '</div>' +
+          '<div class="id">#' + order.id + '</div>' +
+        '</div>' +
+        '<div class="time ' + timerClass(order.time) + '">' + order.time + '</div>' +
+      '</div>' +
+      '<div class="ticket-body">' +
+        order.items.map(item =>
+          '<div class="item">' +
+            '<div>' +
+              '<div class="item-name">' + item.name + '</div>' +
+              (item.mod ? '<div class="item-mod">' + item.mod + '</div>' : "") +
+            '</div>' +
+            '<div class="qty">x' + item.qty + '</div>' +
+          '</div>'
+        ).join("") +
+        (order.note ? '<div class="note">' + order.note + '</div>' : "") +
+      '</div>' +
+      '<div class="ticket-actions">' + actionButtons(order.status, order.id) + '</div>';
+
+    card.addEventListener("dragstart", () => {
+      card.classList.add("dragging");
+    });
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+    });
+
+    return card;
+  }
+
+  function renderBoard() {
+    Object.values(laneMap).forEach(lane => {
+      lane.innerHTML = "";
+    });
+
+    ["pending", "preparing", "ready"].forEach(status => {
+      const laneOrders = orders.filter(order => order.status === status);
+      if (!laneOrders.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "No orders in this state";
+        laneMap[status].appendChild(empty);
+      } else {
+        laneOrders.forEach(order => laneMap[status].appendChild(renderOrder(order)));
+      }
+    });
+
+    const pending = orders.filter(order => order.status === "pending").length;
+    const preparing = orders.filter(order => order.status === "preparing").length;
+    const ready = orders.filter(order => order.status === "ready").length;
+
+    document.getElementById("countPending").textContent = pending;
+    document.getElementById("countPreparing").textContent = preparing;
+    document.getElementById("countReady").textContent = ready;
+    document.getElementById("lanePendingCount").textContent = pending;
+    document.getElementById("lanePreparingCount").textContent = preparing;
+    document.getElementById("laneReadyCount").textContent = ready;
+  }
+
+  function moveOrder(orderId, newStatus) {
+    const order = orders.find(item => item.id === orderId);
+    if (!order) return;
+    order.status = newStatus;
+    renderBoard();
+  }
+
+  function wireDropZones() {
+    document.querySelectorAll(".lane-drop").forEach(dropZone => {
+      dropZone.addEventListener("dragover", event => {
+        event.preventDefault();
+      });
+
+      dropZone.addEventListener("dragenter", event => {
+        event.preventDefault();
+        dropZone.classList.add("drag-over");
+      });
+
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("drag-over");
+      });
+
+      dropZone.addEventListener("drop", () => {
+        const dragging = document.querySelector(".ticket.dragging");
+        dropZone.classList.remove("drag-over");
+        if (!dragging) return;
+        moveOrder(dragging.dataset.id, dropZone.parentElement.dataset.lane);
+      });
+    });
+  }
+
+  document.addEventListener("click", event => {
+    const action = event.target.closest(".action");
+    if (!action) return;
+    moveOrder(action.dataset.id, action.dataset.next);
+  });
+
+  function startClock() {
+    const clock = document.getElementById("clock");
+    const update = () => {
+      const now = new Date();
+      clock.textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    };
+    update();
+    setInterval(update, 1000);
+  }
+
+  wireDropZones();
+  renderBoard();
+  startClock();
+</script>
+</body>
+</html>

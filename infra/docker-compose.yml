@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: qrmeal
+      POSTGRES_USER: qrmeal
+      POSTGRES_PASSWORD: qrmeal
+    # Host 5433 avoids conflict when Windows/local PostgreSQL already uses 5432
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ../services/api
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://qrmeal:qrmeal@postgres:5432/qrmeal
+      JWT_SECRET: dev-secret
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

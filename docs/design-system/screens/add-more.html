@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL — Add More Items</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { background: var(--slate-50); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; }
+  .addmore { background: var(--slate-50); min-height: 100%; position: relative; }
+  .am-header { background: var(--white); padding: 14px 20px; border-bottom: 1px solid var(--slate-100); }
+  .am-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .am-title { flex: 1; font-size: 18px; font-weight: 700; }
+  .active-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--green-500); color: var(--white);
+    padding: 5px 12px; border-radius: var(--r-full); font-size: 11px; font-weight: 600;
+  }
+  .active-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--white); animation: blink 1.5s ease-in-out infinite; }
+  .existing-bar {
+    background: linear-gradient(135deg, var(--teal-50), var(--lavender-50));
+    border-radius: var(--r-md); padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ex-label { font-size: 12px; color: var(--slate-500); margin-bottom: 2px; }
+  .ex-items { font-size: 14px; font-weight: 600; }
+  .ex-total { font-size: 15px; font-weight: 700; color: var(--teal-600); }
+  .am-body { padding: 16px 20px 120px; }
+  .sec-label { font-size: 12px; font-weight: 700; color: var(--slate-400); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; }
+  .suggest-grid { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+  .suggest-card {
+    min-width: 120px; background: var(--white); border-radius: var(--r-lg);
+    padding: 14px 12px; text-align: center; box-shadow: var(--shadow-xs);
+    flex-shrink: 0; cursor: pointer; transition: box-shadow 0.15s;
+  }
+  .suggest-card:hover { box-shadow: var(--shadow-md); }
+  .sg-emoji { font-size: 32px; margin-bottom: 8px; }
+  .sg-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .sg-price { font-size: 13px; color: var(--teal-600); font-weight: 700; }
+  .sg-add { margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--teal-600); background: var(--teal-50); padding: 4px 10px; border-radius: var(--r-full); display: inline-block; }
+  .menu-list { display: flex; flex-direction: column; gap: 10px; }
+  .float-left { display: flex; align-items: center; gap: 10px; }
+  .f-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: var(--r-full); font-size: 13px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="notch"></div>
+  <div class="status-bar"><span>9:41</span><span style="font-size:10px;">&#9679;&#9679;&#9679;</span></div>
+  <div class="screen-body">
+    <div class="addmore">
+      <div class="am-header">
+        <div class="am-top">
+          <button class="btn btn-ghost" style="padding:0;font-size:20px;">&#8592;</button>
+          <div class="am-title">Add to Order</div>
+          <div class="active-badge"><div class="active-dot"></div> Live Order</div>
+        </div>
+        <div class="existing-bar">
+          <div>
+            <div class="ex-label">Current Order #QR-2847</div>
+            <div class="ex-items">3 items &middot; Being prepared</div>
+          </div>
+          <div class="ex-total">$53.01</div>
+        </div>
+      </div>
+
+      <div class="am-body">
+        <div class="sec-label">&#10024; Recommended with your order</div>
+        <div class="suggest-grid">
+          <div class="suggest-card">
+            <div class="sg-emoji">&#127862;</div>
+            <div class="sg-name">Lemonade</div>
+            <div class="sg-price">$5.99</div>
+            <div class="sg-add">+ Add</div>
+          </div>
+          <div class="suggest-card">
+            <div class="sg-emoji">&#127846;</div>
+            <div class="sg-name">Tiramisu</div>
+            <div class="sg-price">$8.99</div>
+            <div class="sg-add">+ Add</div>
+          </div>
+          <div class="suggest-card">
+            <div class="sg-emoji">&#127839;</div>
+            <div class="sg-name">Garlic Bread</div>
+            <div class="sg-price">$6.50</div>
+            <div class="sg-add">+ Add</div>
+          </div>
+          <div class="suggest-card">
+            <div class="sg-emoji">&#127868;</div>
+            <div class="sg-name">Iced Tea</div>
+            <div class="sg-price">$4.50</div>
+            <div class="sg-add">+ Add</div>
+          </div>
+        </div>
+
+        <div class="sec-label">Browse Full Menu</div>
+        <div style="margin-bottom:16px;">
+          <div class="cat-tabs">
+            <button class="cat-tab active">All</button>
+            <button class="cat-tab">Drinks</button>
+            <button class="cat-tab">Desserts</button>
+            <button class="cat-tab">Sides</button>
+            <button class="cat-tab">Starters</button>
+          </div>
+        </div>
+
+        <div class="menu-list">
+          <div class="menu-item">
+            <div class="menu-item-img" style="background:linear-gradient(135deg,var(--lavender-50),var(--blue-50));">&#127862;</div>
+            <div class="menu-item-info">
+              <div class="menu-item-name">Fresh Lemonade</div>
+              <div class="menu-item-desc">Freshly squeezed, hint of mint</div>
+              <div class="menu-item-bottom"><div class="menu-item-price">$5.99</div><button class="add-btn">+</button></div>
+            </div>
+          </div>
+          <div class="menu-item">
+            <div class="menu-item-img" style="background:linear-gradient(135deg,var(--amber-50),var(--coral-50));">&#127846;</div>
+            <div class="menu-item-info">
+              <div class="menu-item-name">Tiramisu</div>
+              <div class="menu-item-desc">Classic Italian coffee dessert</div>
+              <div class="menu-item-bottom"><div class="menu-item-price">$8.99</div><button class="add-btn">+</button></div>
+            </div>
+          </div>
+          <div class="menu-item">
+            <div class="menu-item-img" style="background:linear-gradient(135deg,var(--teal-50),var(--amber-50));">&#127839;</div>
+            <div class="menu-item-info">
+              <div class="menu-item-name">Garlic Bread</div>
+              <div class="menu-item-desc">Toasted with herb butter</div>
+              <div class="menu-item-bottom"><div class="menu-item-price">$6.50</div><button class="add-btn">+</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="float-bar coral">
+        <div class="float-left"><div class="f-badge">2</div><span style="font-size:15px;">Add to Current Order</span></div>
+        <span style="font-size:15px;font-weight:700;">+ $14.98</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

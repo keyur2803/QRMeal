@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL — Menu Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { background: var(--slate-50); min-height: 100vh; }
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px; background: var(--white); border-right: 1px solid var(--slate-200);
+    padding: 24px 0; display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .sb-brand { padding: 0 20px 24px; font-size: 20px; font-weight: 800; color: var(--teal-600); letter-spacing: 2px; }
+  .sb-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border-radius: var(--r-md); font-size: 14px; font-weight: 500;
+    color: var(--slate-600); cursor: pointer; border: none; background: none;
+    text-align: left; width: 100%;
+  }
+  .sb-item:hover { background: var(--slate-50); color: var(--slate-900); }
+  .sb-item.active { background: var(--teal-50); color: var(--teal-700); font-weight: 600; }
+
+  .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+  .page-title { font-size: 26px; font-weight: 800; }
+  .page-subtitle { font-size: 14px; color: var(--slate-500); margin-top: 4px; }
+
+  .content-split { display: grid; grid-template-columns: 1fr 400px; gap: 24px; }
+
+  /* Products Table */
+  .products-panel { background: var(--white); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); }
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 22px; border-bottom: 1px solid var(--slate-100);
+  }
+  .panel-head h3 { font-size: 16px; font-weight: 700; }
+  .filter-row { display: flex; gap: 8px; align-items: center; }
+
+  .product-table { width: 100%; border-collapse: collapse; }
+  .product-table th {
+    text-align: left; padding: 12px 16px; font-size: 12px; font-weight: 600;
+    color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--slate-100); background: var(--slate-50);
+  }
+  .product-table td {
+    padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--slate-100);
+    vertical-align: middle;
+  }
+  .product-table tr:hover td { background: var(--slate-50); }
+  .prod-cell { display: flex; align-items: center; gap: 12px; }
+  .prod-img {
+    width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    background: linear-gradient(135deg, var(--teal-50), var(--teal-100));
+  }
+  .prod-name { font-weight: 600; }
+  .prod-cat { font-size: 12px; color: var(--slate-400); }
+  .toggle {
+    width: 40px; height: 22px; border-radius: 11px; position: relative;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .toggle.on { background: var(--teal-500); }
+  .toggle.off { background: var(--slate-300); }
+  .toggle::after {
+    content: ''; position: absolute; top: 2px; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--white); box-shadow: var(--shadow-xs);
+    transition: left 0.2s;
+  }
+  .toggle.on::after { left: 20px; }
+  .toggle.off::after { left: 2px; }
+  .action-btns { display: flex; gap: 6px; }
+  .act-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--slate-200);
+    background: var(--white); display: flex; align-items: center; justify-content: center;
+    font-size: 14px; cursor: pointer; transition: all 0.15s;
+  }
+  .act-btn:hover { border-color: var(--teal-300); background: var(--teal-50); }
+  .act-btn.delete:hover { border-color: var(--coral-400); background: var(--coral-50); }
+
+  /* Add Product Form */
+  .form-panel { background: var(--white); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); padding: 24px; }
+  .form-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--slate-600); margin-bottom: 6px; display: block; }
+  .form-label .req { color: var(--coral-400); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%2394A3B8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  textarea.input { resize: vertical; min-height: 80px; }
+
+  .upload-zone {
+    border: 2px dashed var(--slate-200); border-radius: var(--r-md);
+    padding: 24px; text-align: center; cursor: pointer; transition: all 0.15s;
+  }
+  .upload-zone:hover { border-color: var(--teal-300); background: var(--teal-50); }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: var(--slate-500); }
+  .upload-text strong { color: var(--teal-600); }
+
+  .tag-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag-option {
+    padding: 7px 14px; border-radius: var(--r-full); font-size: 13px; font-weight: 500;
+    border: 1.5px solid var(--slate-200); background: var(--white);
+    color: var(--slate-600); cursor: pointer; transition: all 0.15s;
+  }
+  .tag-option:hover { border-color: var(--teal-300); }
+  .tag-option.sel { border-color: var(--teal-500); background: var(--teal-50); color: var(--teal-700); }
+
+  .form-actions { display: flex; gap: 10px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sb-brand">QRMEAL</div>
+    <div class="sb-nav">
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128200;</span> Dashboard</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128203;</span> Orders</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#127860;</span> Kitchen Display</button>
+      <button class="sb-item active"><span style="width:20px;text-align:center;">&#128196;</span> Menu Management</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128290;</span> QR Codes</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128101;</span> Tables</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128202;</span> Analytics</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#9881;</span> Settings</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-header">
+      <div><div class="page-title">Menu Management</div><div class="page-subtitle">Add, edit, and organize your restaurant menu</div></div>
+    </div>
+
+    <div class="content-split">
+      <!-- Products List -->
+      <div class="products-panel">
+        <div class="panel-head">
+          <h3>All Menu Items <span style="color:var(--slate-400);font-weight:400;">(18)</span></h3>
+          <div class="filter-row">
+            <div class="search-box" style="padding:8px 14px;"><span class="icon" style="font-size:14px;">&#128269;</span><span class="placeholder" style="font-size:13px;">Search items...</span></div>
+            <select class="input" style="width:auto;padding:8px 36px 8px 12px;font-size:13px;">
+              <option>All Categories</option><option>Pizza</option><option>Pasta</option><option>Salads</option><option>Drinks</option>
+            </select>
+          </div>
+        </div>
+        <table class="product-table">
+          <thead><tr><th>Item</th><th>Price</th><th>Category</th><th>Available</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="prod-cell"><div class="prod-img">&#127829;</div><div><div class="prod-name">Margherita Pizza</div><div class="prod-cat">Bestseller &middot; 820 cal</div></div></div></td>
+              <td style="font-weight:600;">$14.99</td>
+              <td><span class="badge badge-teal">Pizza</span></td>
+              <td><div class="toggle on"></div></td>
+              <td><div class="action-btns"><button class="act-btn">&#9998;</button><button class="act-btn delete">&#128465;</button></div></td>
+            </tr>
+            <tr>
+              <td><div class="prod-cell"><div class="prod-img">&#127834;</div><div><div class="prod-name">Truffle Pasta</div><div class="prod-cat">Premium &middot; 650 cal</div></div></div></td>
+              <td style="font-weight:600;">$18.50</td>
+              <td><span class="badge badge-amber">Pasta</span></td>
+              <td><div class="toggle on"></div></td>
+              <td><div class="action-btns"><button class="act-btn">&#9998;</button><button class="act-btn delete">&#128465;</button></div></td>
+            </tr>
+            <tr>
+              <td><div class="prod-cell"><div class="prod-img" style="background:linear-gradient(135deg,var(--green-50),var(--teal-50));">&#129367;</div><div><div class="prod-name">Caesar Salad</div><div class="prod-cat">Vegetarian &middot; 340 cal</div></div></div></td>
+              <td style="font-weight:600;">$11.99</td>
+              <td><span class="badge badge-green">Salad</span></td>
+              <td><div class="toggle on"></div></td>
+              <td><div class="action-btns"><button class="act-btn">&#9998;</button><button class="act-btn delete">&#128465;</button></div></td>
+            </tr>
+            <tr>
+              <td><div class="prod-cell"><div class="prod-img" style="background:linear-gradient(135deg,var(--amber-50),var(--coral-50));">&#127857;</div><div><div class="prod-name">Grilled Salmon</div><div class="prod-cat">Chef's Special &middot; 520 cal</div></div></div></td>
+              <td style="font-weight:600;">$22.99</td>
+              <td><span class="badge badge-coral">Mains</span></td>
+              <td><div class="toggle on"></div></td>
+              <td><div class="action-btns"><button class="act-btn">&#9998;</button><button class="act-btn delete">&#128465;</button></div></td>
+            </tr>
+            <tr style="opacity:0.5;">
+              <td><div class="prod-cell"><div class="prod-img" style="background:var(--slate-100);">&#127847;</div><div><div class="prod-name">Chocolate Lava Cake</div><div class="prod-cat">Dessert &middot; 480 cal</div></div></div></td>
+              <td style="font-weight:600;">$9.99</td>
+              <td><span class="badge badge-slate">Dessert</span></td>
+              <td><div class="toggle off"></div></td>
+              <td><div class="action-btns"><button class="act-btn">&#9998;</button><button class="act-btn delete">&#128465;</button></div></td>
+            </tr>
+            <tr>
+              <td><div class="prod-cell"><div class="prod-img" style="background:linear-gradient(135deg,var(--lavender-50),var(--blue-50));">&#127862;</div><div><div class="prod-name">Fresh Lemonade</div><div class="prod-cat">Beverage &middot; 120 cal</div></div></div></td>
+              <td style="font-weight:600;">$5.99</td>
+              <td><span class="badge badge-blue">Drinks</span></td>
+              <td><div class="toggle on"></div></td>
+              <td><div class="action-btns"><button class="act-btn">&#9998;</button><button class="act-btn delete">&#128465;</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Add Product Form -->
+      <div class="form-panel">
+        <div class="form-title">&#10133; Add New Item</div>
+
+        <div class="form-group">
+          <label class="form-label">Item Name <span class="req">*</span></label>
+          <input type="text" class="input" placeholder="e.g., Mushroom Risotto">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="input" placeholder="Describe the dish, ingredients, cooking style..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Price <span class="req">*</span></label>
+            <input type="text" class="input" placeholder="$0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category <span class="req">*</span></label>
+            <select class="input"><option value="">Select...</option><option>Pizza</option><option>Pasta</option><option>Mains</option><option>Salads</option><option>Starters</option><option>Desserts</option><option>Drinks</option><option>Sides</option></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prep Time</label>
+            <input type="text" class="input" placeholder="e.g., 15 min">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Calories</label>
+            <input type="text" class="input" placeholder="e.g., 520 cal">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Item Photo</label>
+          <div class="upload-zone">
+            <div class="upload-icon">&#128247;</div>
+            <div class="upload-text">Drag & drop or <strong>browse</strong></div>
+            <div style="font-size:11px;color:var(--slate-400);margin-top:4px;">PNG, JPG up to 5MB</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Dietary Tags</label>
+          <div class="tag-grid">
+            <span class="tag-option sel">&#127807; Vegetarian</span>
+            <span class="tag-option">&#127793; Vegan</span>
+            <span class="tag-option sel">&#127854; Gluten-free</span>
+            <span class="tag-option">&#129372; Dairy-free</span>
+            <span class="tag-option">&#127798; Spicy</span>
+            <span class="tag-option">&#11088; Chef's Pick</span>
+            <span class="tag-option">&#127942; Bestseller</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Customization Options</label>
+          <input type="text" class="input" placeholder="e.g., Size: Small, Medium, Large" style="margin-bottom:8px;">
+          <input type="text" class="input" placeholder="e.g., Add-ons: Extra Cheese (+$2), Bacon (+$3)">
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" style="flex:1;">Save Item</button>
+          <button class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

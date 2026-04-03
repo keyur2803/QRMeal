@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL — Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { background: var(--slate-50); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; }
+  .menu-screen { background: var(--slate-50); min-height: 100%; }
+  .menu-header { background: var(--white); padding: 12px 20px 0; position: sticky; top: 0; z-index: 10; }
+  .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .menu-title { font-size: 22px; font-weight: 700; }
+  .table-chip { font-size: 12px; font-weight: 600; color: var(--teal-600); background: var(--teal-50); padding: 6px 14px; border-radius: var(--r-full); }
+  .search-wrap { margin-bottom: 14px; }
+  .tabs-wrap { padding-bottom: 14px; }
+  .menu-list { padding: 14px 20px 100px; display: flex; flex-direction: column; gap: 10px; }
+  .section-title { font-size: 12px; font-weight: 700; color: var(--slate-400); letter-spacing: 0.8px; text-transform: uppercase; margin: 8px 0 4px; }
+  .promo-banner {
+    background: linear-gradient(135deg, var(--teal-600), var(--teal-500));
+    border-radius: var(--r-lg); padding: 16px 20px; color: var(--white);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .promo-text { font-size: 14px; font-weight: 600; }
+  .promo-sub { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+  .promo-badge { background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: var(--r-full); font-size: 12px; font-weight: 700; }
+  .float-left { display: flex; align-items: center; gap: 10px; }
+  .cart-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: var(--r-full); font-size: 13px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="notch"></div>
+  <div class="status-bar"><span>9:41</span><span style="font-size:10px;">&#9679;&#9679;&#9679;</span></div>
+  <div class="screen-body">
+    <div class="menu-screen">
+      <div class="menu-header">
+        <div class="header-row">
+          <div class="menu-title">Menu</div>
+          <div class="table-chip">&#128205; Table 12</div>
+        </div>
+        <div class="search-wrap">
+          <div class="search-box"><span class="icon">&#128269;</span><span class="placeholder">Search dishes, drinks...</span></div>
+        </div>
+        <div class="tabs-wrap">
+          <div class="cat-tabs">
+            <button class="cat-tab active">&#11088; Popular</button>
+            <button class="cat-tab">Starters</button>
+            <button class="cat-tab">Mains</button>
+            <button class="cat-tab">Pizza</button>
+            <button class="cat-tab">Drinks</button>
+            <button class="cat-tab">Dessert</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-list">
+        <div class="promo-banner">
+          <div><div class="promo-text">Happy Hour Special!</div><div class="promo-sub">20% off all appetizers until 6 PM</div></div>
+          <div class="promo-badge">20% OFF</div>
+        </div>
+
+        <div class="section-title">Popular Right Now</div>
+
+        <div class="menu-item">
+          <div class="menu-item-img">&#127829;</div>
+          <div class="menu-item-info">
+            <div class="veg-tag green" style="margin-bottom:3px"><div class="dot"></div>BESTSELLER</div>
+            <div class="menu-item-name">Margherita Pizza</div>
+            <div class="menu-item-desc">Fresh mozzarella, basil, tomato sauce</div>
+            <div class="menu-item-bottom"><div class="menu-item-price">$14.99</div><button class="add-btn">+</button></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-img">&#127834;</div>
+          <div class="menu-item-info">
+            <div class="menu-item-name">Truffle Pasta</div>
+            <div class="menu-item-desc">Black truffle, parmesan, cream sauce</div>
+            <div class="menu-item-bottom"><div class="menu-item-price">$18.50</div><button class="add-btn">+</button></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-img" style="background:linear-gradient(135deg,var(--green-50),var(--teal-50));">&#129367;</div>
+          <div class="menu-item-info">
+            <div class="veg-tag green" style="margin-bottom:3px"><div class="dot"></div>VEG</div>
+            <div class="menu-item-name">Caesar Salad</div>
+            <div class="menu-item-desc">Romaine, croutons, parmesan dressing</div>
+            <div class="menu-item-bottom"><div class="menu-item-price">$11.99</div><button class="add-btn">+</button></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-img" style="background:linear-gradient(135deg,var(--amber-50),var(--coral-50));">&#127857;</div>
+          <div class="menu-item-info">
+            <div class="menu-item-name">Grilled Salmon</div>
+            <div class="menu-item-desc">Atlantic salmon, lemon butter, seasonal veggies</div>
+            <div class="menu-item-bottom"><div class="menu-item-price">$22.99</div><button class="add-btn">+</button></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-img" style="background:linear-gradient(135deg,var(--coral-50),var(--amber-50));">&#127798;</div>
+          <div class="menu-item-info">
+            <div class="badge badge-coral" style="font-size:10px;padding:3px 8px;margin-bottom:3px;">&#128293; SPICY</div>
+            <div class="menu-item-name">Buffalo Wings</div>
+            <div class="menu-item-desc">Glazed with buffalo sauce, blue cheese dip</div>
+            <div class="menu-item-bottom"><div class="menu-item-price">$13.50</div><button class="add-btn">+</button></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-img" style="background:linear-gradient(135deg,var(--lavender-50),var(--blue-50));">&#127862;</div>
+          <div class="menu-item-info">
+            <div class="menu-item-name">Fresh Lemonade</div>
+            <div class="menu-item-desc">Freshly squeezed, hint of mint</div>
+            <div class="menu-item-bottom"><div class="menu-item-price">$5.99</div><button class="add-btn">+</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="float-bar teal">
+      <div class="float-left"><div class="cart-badge">3</div><span style="font-size:15px;">View Cart</span></div>
+      <span style="font-size:15px;font-weight:700;">$45.48</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL — QR Code Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { background: var(--slate-50); min-height: 100vh; }
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px; background: var(--white); border-right: 1px solid var(--slate-200);
+    padding: 24px 0; display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .sb-brand { padding: 0 20px 24px; font-size: 20px; font-weight: 800; color: var(--teal-600); letter-spacing: 2px; }
+  .sb-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border-radius: var(--r-md); font-size: 14px; font-weight: 500;
+    color: var(--slate-600); cursor: pointer; border: none; background: none;
+    text-align: left; width: 100%;
+  }
+  .sb-item:hover { background: var(--slate-50); color: var(--slate-900); }
+  .sb-item.active { background: var(--teal-50); color: var(--teal-700); font-weight: 600; }
+
+  .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+  .page-title { font-size: 26px; font-weight: 800; }
+  .page-subtitle { font-size: 14px; color: var(--slate-500); margin-top: 4px; }
+
+  .qr-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
+
+  /* QR Table Grid */
+  .qr-panel { background: var(--white); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); }
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 22px; border-bottom: 1px solid var(--slate-100);
+  }
+  .panel-head h3 { font-size: 16px; font-weight: 700; }
+
+  .tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; padding: 20px; }
+  .table-card {
+    background: var(--white); border: 1.5px solid var(--slate-200); border-radius: var(--r-lg);
+    padding: 20px; text-align: center; cursor: pointer; transition: all 0.15s;
+    position: relative;
+  }
+  .table-card:hover { border-color: var(--teal-400); box-shadow: var(--shadow-md); }
+  .table-card.selected { border-color: var(--teal-500); background: var(--teal-50); box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+  .table-card.occupied { border-left: 4px solid var(--green-500); }
+  .tc-qr {
+    width: 80px; height: 80px; margin: 0 auto 12px;
+    background: var(--white); border: 2px solid var(--slate-200); border-radius: var(--r-md);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .tc-qr svg { width: 56px; height: 56px; color: var(--slate-800); }
+  .tc-num { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .tc-status { font-size: 12px; font-weight: 500; }
+  .tc-status.free { color: var(--slate-400); }
+  .tc-status.active { color: var(--green-500); }
+  .tc-scans { font-size: 11px; color: var(--slate-400); margin-top: 6px; }
+  .tc-actions { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+  .tc-btn {
+    padding: 5px 10px; border-radius: var(--r-sm); font-size: 11px; font-weight: 600;
+    border: 1px solid var(--slate-200); background: var(--white); cursor: pointer;
+    color: var(--slate-600); transition: all 0.15s;
+  }
+  .tc-btn:hover { border-color: var(--teal-300); background: var(--teal-50); color: var(--teal-700); }
+
+  /* QR Preview Panel */
+  .preview-panel {
+    background: var(--white); border-radius: var(--r-lg); box-shadow: var(--shadow-xs);
+    padding: 24px; display: flex; flex-direction: column;
+  }
+  .preview-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .preview-qr {
+    width: 200px; height: 200px; margin: 0 auto 20px;
+    background: var(--white); border: 3px solid var(--slate-800); border-radius: var(--r-lg);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .preview-qr svg { width: 160px; height: 160px; color: var(--slate-900); }
+  .qr-logo {
+    position: absolute; width: 40px; height: 40px; border-radius: 8px;
+    background: var(--teal-600); display: flex; align-items: center; justify-content: center;
+    color: var(--white); font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+  }
+  .preview-url {
+    text-align: center; font-size: 12px; color: var(--slate-500);
+    background: var(--slate-50); padding: 10px; border-radius: var(--r-md); margin-bottom: 20px;
+    font-family: monospace; word-break: break-all;
+  }
+
+  .customize-section { margin-bottom: 20px; }
+  .cs-label { font-size: 13px; font-weight: 600; color: var(--slate-600); margin-bottom: 8px; }
+  .color-options { display: flex; gap: 8px; }
+  .color-dot {
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 3px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .color-dot:hover { border-color: var(--slate-400); }
+  .color-dot.sel { border-color: var(--slate-800); }
+
+  .size-options { display: flex; gap: 8px; }
+  .size-opt {
+    padding: 8px 16px; border-radius: var(--r-md); font-size: 13px; font-weight: 500;
+    border: 1.5px solid var(--slate-200); background: var(--white); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .size-opt:hover { border-color: var(--teal-300); }
+  .size-opt.sel { border-color: var(--teal-500); background: var(--teal-50); color: var(--teal-700); }
+
+  .download-actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+  .dl-btn {
+    padding: 14px; border-radius: var(--r-md); font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; text-align: center; display: flex; align-items: center;
+    justify-content: center; gap: 8px; transition: all 0.15s; font-family: inherit;
+  }
+  .dl-btn:hover { transform: translateY(-1px); }
+  .dl-primary { background: linear-gradient(135deg, var(--teal-500), var(--teal-600)); color: var(--white); box-shadow: var(--shadow-teal); }
+  .dl-secondary { background: var(--slate-100); color: var(--slate-700); }
+  .dl-outline { background: var(--white); color: var(--teal-600); border: 1.5px solid var(--teal-300); }
+
+  .bulk-section {
+    margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--slate-200);
+  }
+  .bulk-label { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sb-brand">QRMEAL</div>
+    <div class="sb-nav">
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128200;</span> Dashboard</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128203;</span> Orders</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#127860;</span> Kitchen Display</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128196;</span> Menu Management</button>
+      <button class="sb-item active"><span style="width:20px;text-align:center;">&#128290;</span> QR Codes</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128101;</span> Tables</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#128202;</span> Analytics</button>
+      <button class="sb-item"><span style="width:20px;text-align:center;">&#9881;</span> Settings</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-header">
+      <div><div class="page-title">QR Code Management</div><div class="page-subtitle">Generate, customize, and manage QR codes for each table</div></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-secondary btn-sm">+ Add Table</button>
+        <button class="btn btn-primary btn-sm">&#128424; Print All QR Codes</button>
+      </div>
+    </div>
+
+    <div class="qr-layout">
+      <!-- Tables Grid -->
+      <div class="qr-panel">
+        <div class="panel-head">
+          <h3>Tables <span style="color:var(--slate-400);font-weight:400;">(16 tables)</span></h3>
+          <div style="display:flex;gap:8px;">
+            <span class="badge badge-green">&#9679; 8 Occupied</span>
+            <span class="badge badge-slate">&#9679; 8 Free</span>
+          </div>
+        </div>
+        <div class="tables-grid">
+          <div class="table-card selected occupied">
+            <div class="tc-qr"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="4" height="4"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="4" height="4"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="18" y="10" width="4" height="4"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="10" y="18" width="4" height="4"/><rect x="16" y="16" width="6" height="6" rx="1"/></svg></div>
+            <div class="tc-num">Table 1</div>
+            <div class="tc-status active">&#9679; Occupied</div>
+            <div class="tc-scans">47 scans today</div>
+            <div class="tc-actions"><button class="tc-btn">&#128424; Print</button><button class="tc-btn">&#128279; Copy URL</button></div>
+          </div>
+          <div class="table-card">
+            <div class="tc-qr"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="4" height="4"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="4" height="4"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="18" y="10" width="4" height="4"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="10" y="18" width="4" height="4"/><rect x="16" y="16" width="6" height="6" rx="1"/></svg></div>
+            <div class="tc-num">Table 2</div>
+            <div class="tc-status free">&#9679; Free</div>
+            <div class="tc-scans">32 scans today</div>
+            <div class="tc-actions"><button class="tc-btn">&#128424; Print</button><button class="tc-btn">&#128279; Copy</button></div>
+          </div>
+          <div class="table-card occupied">
+            <div class="tc-qr"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="4" height="4"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="4" height="4"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="18" y="10" width="4" height="4"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="10" y="18" width="4" height="4"/><rect x="16" y="16" width="6" height="6" rx="1"/></svg></div>
+            <div class="tc-num">Table 3</div>
+            <div class="tc-status active">&#9679; Occupied</div>
+            <div class="tc-scans">28 scans today</div>
+            <div class="tc-actions"><button class="tc-btn">&#128424; Print</button><button class="tc-btn">&#128279; Copy</button></div>
+          </div>
+          <div class="table-card">
+            <div class="tc-qr"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="4" height="4"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="4" height="4"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="18" y="10" width="4" height="4"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="10" y="18" width="4" height="4"/><rect x="16" y="16" width="6" height="6" rx="1"/></svg></div>
+            <div class="tc-num">Table 4</div>
+            <div class="tc-status free">&#9679; Free</div>
+            <div class="tc-scans">15 scans today</div>
+            <div class="tc-actions"><button class="tc-btn">&#128424; Print</button><button class="tc-btn">&#128279; Copy</button></div>
+          </div>
+          <div class="table-card occupied">
+            <div class="tc-qr"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="4" height="4"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="4" height="4"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="18" y="10" width="4" height="4"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="10" y="18" width="4" height="4"/><rect x="16" y="16" width="6" height="6" rx="1"/></svg></div>
+            <div class="tc-num">Table 5</div>
+            <div class="tc-status active">&#9679; Occupied</div>
+            <div class="tc-scans">41 scans today</div>
+            <div class="tc-actions"><button class="tc-btn">&#128424; Print</button><button class="tc-btn">&#128279; Copy</button></div>
+          </div>
+          <div class="table-card">
+            <div class="tc-qr"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="4" height="4"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="4" height="4"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="18" y="10" width="4" height="4"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="10" y="18" width="4" height="4"/><rect x="16" y="16" width="6" height="6" rx="1"/></svg></div>
+            <div class="tc-num">Table 6</div>
+            <div class="tc-status free">&#9679; Free</div>
+            <div class="tc-scans">22 scans today</div>
+            <div class="tc-actions"><button class="tc-btn">&#128424; Print</button><button class="tc-btn">&#128279; Copy</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Preview & Customize -->
+      <div class="preview-panel">
+        <div class="preview-title">QR Code Preview &mdash; Table 1</div>
+
+        <div class="preview-qr">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="4" height="4"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="4" height="4"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="18" y="10" width="4" height="4"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="10" y="18" width="4" height="4"/><rect x="16" y="16" width="6" height="6" rx="1"/></svg>
+          <div class="qr-logo">QR</div>
+        </div>
+
+        <div class="preview-url">qrmeal.app/r/gourmet-kitchen/table/1</div>
+
+        <div class="customize-section">
+          <div class="cs-label">QR Color</div>
+          <div class="color-options">
+            <div class="color-dot sel" style="background:var(--slate-900);"></div>
+            <div class="color-dot" style="background:var(--teal-600);"></div>
+            <div class="color-dot" style="background:var(--teal-800);"></div>
+            <div class="color-dot" style="background:var(--slate-700);"></div>
+          </div>
+        </div>
+
+        <div class="customize-section">
+          <div class="cs-label">Print Size</div>
+          <div class="size-options">
+            <div class="size-opt">Small<br><span style="font-size:11px;color:var(--slate-400);">2x2 in</span></div>
+            <div class="size-opt sel">Medium<br><span style="font-size:11px;color:var(--slate-400);">3x3 in</span></div>
+            <div class="size-opt">Large<br><span style="font-size:11px;color:var(--slate-400);">5x5 in</span></div>
+          </div>
+        </div>
+
+        <div class="customize-section">
+          <div class="cs-label">Include on Print</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" checked> Restaurant name & logo
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" checked> Table number
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" checked> "Scan to Order" text
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+              <input type="checkbox"> WiFi credentials
+            </label>
+          </div>
+        </div>
+
+        <div class="download-actions">
+          <button class="dl-btn dl-primary">&#128424; Download PNG</button>
+          <button class="dl-btn dl-outline">&#128196; Download PDF (Printable)</button>
+          <button class="dl-btn dl-secondary">&#128279; Copy Share Link</button>
+        </div>
+
+        <div class="bulk-section">
+          <div class="bulk-label">Bulk Actions</div>
+          <div style="display:flex;gap:8px;">
+            <button class="dl-btn dl-secondary" style="flex:1;font-size:13px;">&#128424; Print All (16)</button>
+            <button class="dl-btn dl-secondary" style="flex:1;font-size:13px;">&#128230; Export All PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

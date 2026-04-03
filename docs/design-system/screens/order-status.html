@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL — Order Status</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { background: var(--slate-50); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; }
+  .status { background: var(--slate-50); min-height: 100%; }
+  .status-hero {
+    background: linear-gradient(145deg, var(--teal-500), var(--teal-600), var(--teal-700));
+    padding: 20px 20px 48px; color: var(--white); position: relative;
+  }
+  .hero-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .hero-title { font-size: 17px; font-weight: 700; }
+  .order-id { font-size: 12px; opacity: 0.7; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: var(--r-full); }
+  .hero-center { text-align: center; }
+  .hero-emoji { font-size: 52px; margin-bottom: 12px; }
+  .hero-text { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .hero-sub { font-size: 14px; opacity: 0.85; }
+  .status-body { padding: 0 20px; margin-top: -24px; padding-bottom: 24px; }
+  .eta-box {
+    background: var(--white); border-radius: var(--r-lg); padding: 20px;
+    text-align: center; margin-bottom: 14px; box-shadow: var(--shadow-md);
+    border: 1.5px solid var(--teal-100);
+  }
+  .eta-label { font-size: 12px; color: var(--teal-600); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .eta-val { font-size: 36px; font-weight: 800; color: var(--teal-600); }
+  .eta-unit { font-size: 15px; font-weight: 500; color: var(--teal-600); }
+  .timeline-card { background: var(--white); border-radius: var(--r-xl); box-shadow: var(--shadow-md); padding: 24px; margin-bottom: 14px; }
+  .timeline { position: relative; padding-left: 36px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 12px; top: 10px; bottom: 10px;
+    width: 2px; background: var(--slate-200);
+  }
+  .tl-item { position: relative; padding-bottom: 28px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-dot {
+    position: absolute; left: -36px; top: 1px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--slate-200); border: 3px solid var(--white);
+    display: flex; align-items: center; justify-content: center; z-index: 1;
+  }
+  .tl-dot.done { background: var(--teal-500); }
+  .tl-dot.active { background: var(--teal-500); animation: pulse 2s ease-in-out infinite; }
+  .tl-dot.done::after, .tl-dot.active::after { content:''; width: 8px; height: 8px; border-radius: 50%; background: var(--white); }
+  .tl-title { font-size: 14px; font-weight: 600; color: var(--slate-800); }
+  .tl-time { font-size: 12px; color: var(--slate-400); margin-top: 2px; }
+  .tl-item.pending .tl-title { color: var(--slate-400); }
+  .order-items-card {
+    background: var(--white); border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
+    padding: 20px; margin-bottom: 14px;
+  }
+  .oi-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--slate-700); }
+  .oi-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+  .oi-row:not(:last-child) { border-bottom: 1px solid var(--slate-100); }
+  .oi-name { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .oi-status-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .oi-qty { font-size: 12px; color: var(--slate-400); }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="notch"></div>
+  <div class="status-bar" style="position:absolute;z-index:50;width:100%;color:var(--white);"><span>9:41</span><span style="font-size:10px;">&#9679;&#9679;&#9679;</span></div>
+  <div class="screen-body">
+    <div class="status">
+      <div class="status-hero">
+        <div class="hero-top">
+          <div class="hero-title">Order Status</div>
+          <div class="order-id">#QR-2847</div>
+        </div>
+        <div class="hero-center">
+          <div class="hero-emoji">&#128293;</div>
+          <div class="hero-text">Preparing Your Order</div>
+          <div class="hero-sub">Chef is working on your meal!</div>
+        </div>
+      </div>
+
+      <div class="status-body">
+        <div class="eta-box animate-in">
+          <div class="eta-label">Estimated Ready In</div>
+          <div><span class="eta-val">12</span> <span class="eta-unit">minutes</span></div>
+        </div>
+
+        <div class="timeline-card animate-in">
+          <div class="timeline">
+            <div class="tl-item"><div class="tl-dot done"></div><div class="tl-title">Order Placed</div><div class="tl-time">9:42 AM</div></div>
+            <div class="tl-item"><div class="tl-dot done"></div><div class="tl-title">Confirmed by Kitchen</div><div class="tl-time">9:43 AM</div></div>
+            <div class="tl-item"><div class="tl-dot active"></div><div class="tl-title">Being Prepared</div><div class="tl-time">In progress...</div></div>
+            <div class="tl-item pending"><div class="tl-dot"></div><div class="tl-title">Ready for Pickup</div><div class="tl-time">&mdash;</div></div>
+            <div class="tl-item pending"><div class="tl-dot"></div><div class="tl-title">Served to Table</div><div class="tl-time">&mdash;</div></div>
+          </div>
+        </div>
+
+        <div class="order-items-card animate-in">
+          <div class="oi-title">Your Items</div>
+          <div class="oi-row">
+            <div class="oi-name"><div class="oi-status-dot" style="background:var(--amber-400);"></div> Margherita Pizza (L)</div>
+            <div class="oi-qty">x1</div>
+          </div>
+          <div class="oi-row">
+            <div class="oi-name"><div class="oi-status-dot" style="background:var(--teal-400);"></div> Truffle Pasta</div>
+            <div class="oi-qty">x1</div>
+          </div>
+          <div class="oi-row">
+            <div class="oi-name"><div class="oi-status-dot" style="background:var(--green-500);"></div> Caesar Salad</div>
+            <div class="oi-qty">x1</div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary btn-full" style="margin-bottom:10px;">+ Add More Items to This Order</button>
+        <button class="btn btn-ghost btn-full" style="color:var(--slate-400);font-size:13px;">&#128276; Call Waiter</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

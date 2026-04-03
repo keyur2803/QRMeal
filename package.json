@@ -1,0 +1,23 @@
+{
+  "name": "qrmeal-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace services/api run dev",
+    "dev:customer": "npm --workspace apps/customer-web run dev",
+    "dev:kitchen": "npm --workspace apps/kitchen-web run dev",
+    "dev:admin": "npm --workspace apps/admin-web run dev",
+    "dev:all": "concurrently -c \"cyan,magenta,yellow,green\" -n \"api,customer,kitchen,admin\" \"npm run dev:api\" \"npm run dev:customer\" \"npm run dev:kitchen\" \"npm run dev:admin\"",
+    "lint": "npm --workspaces --if-present run lint",
+    "typecheck": "npx tsc -p services/api/tsconfig.json --noEmit && npx tsc -p apps/customer-web/tsconfig.json --noEmit && npx tsc -p apps/kitchen-web/tsconfig.json --noEmit && npx tsc -p apps/admin-web/tsconfig.json --noEmit",
+    "build": "npm --workspace apps/customer-web run build && npm --workspace apps/kitchen-web run build && npm --workspace apps/admin-web run build",
+    "verify": "npm run typecheck && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

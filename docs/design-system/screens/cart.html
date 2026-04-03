@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL — Cart</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { background: var(--slate-50); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; }
+  .cart { background: var(--slate-50); height: 100%; display: flex; flex-direction: column; }
+  .cart-header {
+    background: var(--white); padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--slate-100); flex-shrink: 0;
+  }
+  .back { font-size: 20px; cursor: pointer; color: var(--slate-600); background: none; border: none; }
+  .cart-title { font-size: 18px; font-weight: 700; flex: 1; }
+  .item-count { font-size: 13px; color: var(--slate-400); }
+  .items { padding: 16px 20px; flex: 1; overflow-y: auto; }
+  .cart-item {
+    background: var(--white); border-radius: var(--r-lg); padding: 14px;
+    margin-bottom: 10px; display: flex; gap: 12px; box-shadow: var(--shadow-xs);
+  }
+  .ci-img {
+    width: 64px; height: 64px; border-radius: var(--r-md); flex-shrink: 0;
+    background: linear-gradient(135deg, var(--teal-50), var(--teal-100));
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+  }
+  .ci-info { flex: 1; min-width: 0; }
+  .ci-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .ci-custom { font-size: 12px; color: var(--slate-400); margin-bottom: 8px; }
+  .ci-row { display: flex; justify-content: space-between; align-items: center; }
+  .ci-price { font-size: 16px; font-weight: 700; color: var(--teal-600); }
+  .mini-qty { display: flex; align-items: center; gap: 10px; }
+  .mini-btn {
+    width: 28px; height: 28px; border-radius: 8px; border: 1.5px solid var(--slate-200);
+    background: var(--white); font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: var(--slate-600);
+  }
+  .mini-btn:hover { border-color: var(--teal-300); color: var(--teal-600); }
+  .mini-num { font-size: 14px; font-weight: 700; }
+  .add-more {
+    background: linear-gradient(135deg, var(--teal-50), var(--lavender-50));
+    border-radius: var(--r-lg); padding: 16px; margin: 0 20px 12px;
+    display: flex; align-items: center; gap: 14px; cursor: pointer;
+    border: 1.5px dashed var(--teal-300); flex-shrink: 0;
+  }
+  .add-more:hover { border-color: var(--teal-400); background: var(--teal-50); }
+  .add-more-icon {
+    width: 44px; height: 44px; border-radius: 12px; background: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--teal-600); box-shadow: var(--shadow-xs); flex-shrink: 0;
+  }
+  .add-more-text { font-size: 14px; font-weight: 600; color: var(--teal-700); }
+  .add-more-sub { font-size: 12px; color: var(--slate-500); margin-top: 2px; }
+  .summary {
+    background: var(--white); border-radius: var(--r-xl) var(--r-xl) 0 0;
+    padding: 24px 20px 32px; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); flex-shrink: 0;
+  }
+  .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+  .row .label { color: var(--slate-500); }
+  .row .val { font-weight: 600; }
+  .divider { height: 1px; background: var(--slate-200); margin: 12px 0; }
+  .total { font-size: 18px; font-weight: 700; }
+  .total .label { color: var(--slate-900); }
+  .promo-row {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    background: var(--green-50); border-radius: var(--r-md); margin-bottom: 14px;
+  }
+  .promo-row span { font-size: 13px; color: var(--green-600); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="notch"></div>
+  <div class="status-bar"><span>9:41</span><span style="font-size:10px;">&#9679;&#9679;&#9679;</span></div>
+  <div class="screen-body">
+    <div class="cart">
+      <div class="cart-header">
+        <button class="back">&#8592;</button>
+        <div class="cart-title">Your Order</div>
+        <div class="item-count">3 items</div>
+      </div>
+
+      <div class="items">
+        <div class="cart-item">
+          <div class="ci-img">&#127829;</div>
+          <div class="ci-info">
+            <div class="ci-name">Margherita Pizza</div>
+            <div class="ci-custom">Large &middot; Extra Cheese</div>
+            <div class="ci-row"><div class="ci-price">$20.99</div><div class="mini-qty"><button class="mini-btn">-</button><span class="mini-num">1</span><button class="mini-btn">+</button></div></div>
+          </div>
+        </div>
+        <div class="cart-item">
+          <div class="ci-img">&#127834;</div>
+          <div class="ci-info">
+            <div class="ci-name">Truffle Pasta</div>
+            <div class="ci-custom">Regular</div>
+            <div class="ci-row"><div class="ci-price">$18.50</div><div class="mini-qty"><button class="mini-btn">-</button><span class="mini-num">1</span><button class="mini-btn">+</button></div></div>
+          </div>
+        </div>
+        <div class="cart-item">
+          <div class="ci-img" style="background:linear-gradient(135deg,var(--green-50),var(--teal-50));">&#129367;</div>
+          <div class="ci-info">
+            <div class="ci-name">Caesar Salad</div>
+            <div class="ci-custom">No croutons</div>
+            <div class="ci-row"><div class="ci-price">$11.99</div><div class="mini-qty"><button class="mini-btn">-</button><span class="mini-num">1</span><button class="mini-btn">+</button></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="add-more">
+        <div class="add-more-icon">+</div>
+        <div><div class="add-more-text">Add More Items</div><div class="add-more-sub">Browse menu for extras & drinks</div></div>
+      </div>
+
+      <div class="summary">
+        <div class="promo-row">
+          <span>&#127881;</span>
+          <span>Happy Hour: 20% off appetizers applied!</span>
+        </div>
+        <div class="row"><span class="label">Subtotal</span><span class="val">$51.48</span></div>
+        <div class="row"><span class="label">Discount</span><span class="val" style="color:var(--green-500);">-$2.40</span></div>
+        <div class="row"><span class="label">Tax (8%)</span><span class="val">$3.93</span></div>
+        <div class="divider"></div>
+        <div class="row total"><span class="label">Total</span><span class="val">$53.01</span></div>
+        <button class="btn btn-primary btn-full" style="padding:18px;font-size:16px;margin-top:14px;">Place Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

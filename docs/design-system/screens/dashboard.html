@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL — Restaurant Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { background: var(--slate-50); min-height: 100vh; }
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px; background: var(--white); border-right: 1px solid var(--slate-200);
+    padding: 24px 0; display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .sb-brand { padding: 0 20px 24px; font-size: 20px; font-weight: 800; color: var(--teal-600); letter-spacing: 2px; }
+  .sb-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border-radius: var(--r-md); font-size: 14px; font-weight: 500;
+    color: var(--slate-600); cursor: pointer; transition: all 0.15s; border: none; background: none;
+    text-align: left; width: 100%;
+  }
+  .sb-item:hover { background: var(--slate-50); color: var(--slate-900); }
+  .sb-item.active { background: var(--teal-50); color: var(--teal-700); font-weight: 600; }
+  .sb-icon { width: 20px; text-align: center; font-size: 16px; }
+  .sb-badge { margin-left: auto; background: var(--coral-400); color: var(--white); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: var(--r-full); }
+  .sb-footer { padding: 16px 20px; border-top: 1px solid var(--slate-100); }
+  .sb-user { display: flex; align-items: center; gap: 10px; }
+  .sb-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--teal-100); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--teal-700); }
+  .sb-name { font-size: 13px; font-weight: 600; }
+  .sb-role { font-size: 11px; color: var(--slate-400); }
+
+  .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+  .page-title { font-size: 26px; font-weight: 800; }
+  .page-subtitle { font-size: 14px; color: var(--slate-500); margin-top: 4px; }
+  .header-actions { display: flex; gap: 10px; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--white); border-radius: var(--r-lg); padding: 22px; box-shadow: var(--shadow-xs); }
+  .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 14px; }
+  .stat-val { font-size: 28px; font-weight: 800; }
+  .stat-label { font-size: 13px; color: var(--slate-500); margin-top: 2px; }
+  .stat-change { font-size: 12px; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+  .up { color: var(--green-500); }
+  .down { color: var(--coral-400); }
+
+  .content-grid { display: grid; grid-template-columns: 5fr 3fr; gap: 20px; }
+  .panel { background: var(--white); border-radius: var(--r-lg); padding: 22px; box-shadow: var(--shadow-xs); }
+  .panel-title { font-size: 16px; font-weight: 700; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+  .panel-badge { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: var(--r-full); }
+
+  .order-row {
+    display: flex; align-items: center; padding: 14px 0;
+    border-bottom: 1px solid var(--slate-100); gap: 14px;
+  }
+  .order-row:last-child { border-bottom: none; }
+  .or-table { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .or-info { flex: 1; min-width: 0; }
+  .or-items { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .or-time { font-size: 12px; color: var(--slate-400); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+  .or-badge { padding: 6px 14px; border-radius: var(--r-full); font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+
+  .queue-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; background: var(--slate-50); border-radius: var(--r-md); margin-bottom: 8px;
+  }
+  .queue-item:last-child { margin-bottom: 0; }
+  .q-label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .q-val { font-size: 15px; font-weight: 700; }
+
+  .progress-bar { height: 8px; background: var(--slate-100); border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+
+  .pop-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--slate-100);
+  }
+  .pop-item:last-child { border-bottom: none; }
+  .pop-rank { width: 22px; height: 22px; border-radius: 50%; background: var(--teal-50); color: var(--teal-600); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sb-brand">QRMEAL</div>
+    <div class="sb-nav">
+      <button class="sb-item active"><span class="sb-icon">&#128200;</span> Dashboard</button>
+      <button class="sb-item"><span class="sb-icon">&#128203;</span> Orders <span class="sb-badge">24</span></button>
+      <button class="sb-item"><span class="sb-icon">&#127860;</span> Kitchen Display</button>
+      <button class="sb-item"><span class="sb-icon">&#128196;</span> Menu Management</button>
+      <button class="sb-item"><span class="sb-icon">&#128290;</span> QR Codes</button>
+      <button class="sb-item"><span class="sb-icon">&#128101;</span> Tables</button>
+      <button class="sb-item"><span class="sb-icon">&#128202;</span> Analytics</button>
+      <button class="sb-item"><span class="sb-icon">&#9881;</span> Settings</button>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar">JD</div>
+        <div><div class="sb-name">John Doe</div><div class="sb-role">Manager</div></div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-header">
+      <div><div class="page-title">Dashboard</div><div class="page-subtitle">The Gourmet Kitchen &mdash; Real-time Overview</div></div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm">&#128276; Notifications</button>
+        <button class="btn btn-primary btn-sm">Open Kitchen View</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--teal-50);color:var(--teal-600);">&#128203;</div>
+        <div class="stat-val">24</div><div class="stat-label">Active Orders</div>
+        <div class="stat-change up">&#9650; 12% from yesterday</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--amber-100);color:var(--amber-600);">&#9202;</div>
+        <div class="stat-val">8 min</div><div class="stat-label">Avg. Prep Time</div>
+        <div class="stat-change up">&#9650; 2 min faster</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--green-100);color:var(--green-600);">&#128176;</div>
+        <div class="stat-val">$2,847</div><div class="stat-label">Today's Revenue</div>
+        <div class="stat-change up">&#9650; 18% vs last week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--lavender-50);color:var(--lavender-400);">&#128101;</div>
+        <div class="stat-val">42</div><div class="stat-label">Tables Served</div>
+        <div class="stat-change up">&#9650; 8% from yesterday</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="panel">
+        <div class="panel-title">Live Orders <span class="panel-badge badge-teal">24 active</span></div>
+        <div class="order-row">
+          <div class="or-table" style="background:var(--teal-50);color:var(--teal-700);">T12</div>
+          <div class="or-info"><div class="or-items">Margherita Pizza, Truffle Pasta, Caesar Salad</div><div class="or-time">3 min ago &middot; #QR-2847</div></div>
+          <div class="or-badge badge-amber">Preparing</div>
+        </div>
+        <div class="order-row">
+          <div class="or-table" style="background:var(--amber-100);color:var(--amber-600);">T05</div>
+          <div class="or-info"><div class="or-items">Grilled Salmon, Lemonade x2</div><div class="or-time">8 min ago &middot; #QR-2846</div></div>
+          <div class="or-badge badge-green">Ready</div>
+        </div>
+        <div class="order-row">
+          <div class="or-table" style="background:var(--teal-50);color:var(--teal-700);">T08</div>
+          <div class="or-info"><div class="or-items">Spicy Wings, Garlic Bread, Tiramisu</div><div class="or-time">1 min ago &middot; #QR-2848</div></div>
+          <div class="or-badge badge-teal">New</div>
+        </div>
+        <div class="order-row">
+          <div class="or-table" style="background:var(--lavender-50);color:var(--lavender-400);">T15</div>
+          <div class="or-info"><div class="or-items">+ Add-on: Lemonade, Garlic Bread</div><div class="or-time">Just now &middot; #QR-2845 (add-on)</div></div>
+          <div class="or-badge" style="background:var(--lavender-50);color:var(--lavender-400);">Add-on</div>
+        </div>
+        <div class="order-row">
+          <div class="or-table" style="background:var(--slate-100);color:var(--slate-500);">T03</div>
+          <div class="or-info"><div class="or-items">Pasta Carbonara, Wine</div><div class="or-time">22 min ago &middot; #QR-2844</div></div>
+          <div class="or-badge badge-slate">Served</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div class="panel">
+          <div class="panel-title">Kitchen Queue</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;">
+            <span style="color:var(--slate-500);">Load</span>
+            <span style="font-weight:600;color:var(--amber-600);">Moderate (60%)</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:60%;background:linear-gradient(90deg,var(--teal-400),var(--amber-400));"></div></div>
+          <div class="queue-item"><span class="q-label">&#128293; In Progress</span><span class="q-val" style="color:var(--amber-400);">5</span></div>
+          <div class="queue-item"><span class="q-label">&#9203; Waiting</span><span class="q-val" style="color:var(--coral-400);">3</span></div>
+          <div class="queue-item"><span class="q-label">&#9989; Completed</span><span class="q-val" style="color:var(--green-500);">89</span></div>
+          <div class="queue-item"><span class="q-label">&#128260; Add-ons</span><span class="q-val" style="color:var(--lavender-400);">12</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Popular Today</div>
+          <div class="pop-item"><div style="display:flex;align-items:center;"><div class="pop-rank">1</div><span style="font-size:13px;">Margherita Pizza</span></div><span style="font-size:13px;font-weight:700;color:var(--teal-600);">18x</span></div>
+          <div class="pop-item"><div style="display:flex;align-items:center;"><div class="pop-rank">2</div><span style="font-size:13px;">Truffle Pasta</span></div><span style="font-size:13px;font-weight:700;color:var(--teal-600);">14x</span></div>
+          <div class="pop-item"><div style="display:flex;align-items:center;"><div class="pop-rank">3</div><span style="font-size:13px;">Grilled Salmon</span></div><span style="font-size:13px;font-weight:700;color:var(--teal-600);">11x</span></div>
+          <div class="pop-item"><div style="display:flex;align-items:center;"><div class="pop-rank">4</div><span style="font-size:13px;">Caesar Salad</span></div><span style="font-size:13px;font-weight:700;color:var(--teal-600);">9x</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

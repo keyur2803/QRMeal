@@ -8,6 +8,7 @@ import "dotenv/config";
 import path from "path";
 import express from "express";
 import cors from "cors";
+import type { Server } from "node:http";
 import { env } from "./config/env.js";
 import { prisma } from "./db/prisma.js";
 import { registerRoutes } from "./routes/index.js";
@@ -16,7 +17,12 @@ import { ensureMenuUploadsDir } from "./lib/menuImageUpload.js";
 
 const app = express();
 
-ensureMenuUploadsDir();
+try {
+  ensureMenuUploadsDir();
+} catch (e) {
+  console.error("Uploads directory is not writable. Upload endpoints may fail.");
+  console.error(e);
+}
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ── Global middleware ──────────────────────────────────────────────
@@ -46,18 +52,38 @@ app.use(errorHandler);
 // ── Start ──────────────────────────────────────────────────────────
 
 async function main() {
-  try {
-    await prisma.$connect();
-    console.log("PostgreSQL connected");
-  } catch (e) {
-    console.error("PostgreSQL connection failed — check DATABASE_URL in .env");
-    console.error(e);
-    process.exit(1);
+  const maxAttempts = 10;
+  let attempt = 0;
+  while (attempt < maxAttempts) {
+    attempt += 1;
+    try {
+      await prisma.$connect();
+      console.log("PostgreSQL connected");
+      break;
+    } catch (e) {
+      const lastAttempt = attempt === maxAttempts;
+      console.error(`PostgreSQL connection failed (attempt ${attempt}/${maxAttempts})`);
+      console.error(e);
+      if (lastAttempt) {
+        process.exit(1);
+      }
+      await new Promise((r) => setTimeout(r, 3000));
+    }
   }
 
-  app.listen(env.port, () => {
-    console.log(`QRMEAL API running → http://localhost:${env.port}`);
+  const server: Server = app.listen(env.port, "0.0.0.0", () => {
+    console.log(`QRMEAL API running → http://0.0.0.0:${env.port}`);
   });
+
+  const shutdown = async (signal: string) => {
+    console.log(`${signal} received, shutting down...`);
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await prisma.$disconnect().catch(() => undefined);
+    process.exit(0);
+  };
+
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
 }
 
 main();

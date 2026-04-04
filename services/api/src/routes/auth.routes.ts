@@ -30,8 +30,8 @@ authRouter.post("/login", async (req, res) => {
     // Set JWT as httpOnly cookie
     res.cookie("qrmeal_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_VALUE === "production",
-      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (align with token expiry)
     });
 
@@ -45,7 +45,7 @@ authRouter.post("/logout", (req, res) => {
   res.clearCookie("qrmeal_token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
   });
   return res.json({ message: "Logged out successfully" });
 });

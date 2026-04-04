@@ -13,8 +13,7 @@ import { Router } from "express";
 import type { RequestHandler } from "express";
 import * as menuService from "../services/menu.service.js";
 import { requireAuth } from "../middleware/auth-guard.js";
-import { uploadMenuImage, publicUrlForStoredFile, ensureMenuUploadsDir } from "../lib/menuImageUpload.js";
-import { deleteUploadByPublicUrl } from "../lib/deleteUpload.js";
+import { uploadMenuImage, storeMenuItemImage, deleteMenuItemImage } from "../lib/menuImageUpload.js";
 
 export const menuRouter = Router();
 
@@ -63,7 +62,7 @@ menuRouter.post("/upload", requireAuth("owner"), uploadSingle, async (req, res) 
   }
 
   const file = req.file;
-  const imageUrl = file ? publicUrlForStoredFile(file.filename) : null;
+  const imageUrl = file ? await storeMenuItemImage(file) : null;
 
   const item = await menuService.addItem({
     category,
@@ -110,10 +109,10 @@ menuRouter.post("/:id/image", requireAuth("owner"), uploadSingle, async (req, re
   }
 
   if (existing.imageUrl) {
-    deleteUploadByPublicUrl(existing.imageUrl);
+    await deleteMenuItemImage(existing.imageUrl);
   }
 
-  const url = publicUrlForStoredFile(file.filename);
+  const url = await storeMenuItemImage(file);
   const updated = await menuService.patchItem(id, { imageUrl: url });
   if (!updated) {
     return res.status(404).json({ message: "Item not found" });

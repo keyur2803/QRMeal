@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchOrders } from "../api/orders";
 import type { OrderSummary } from "../types/order";
+import "../styles/dashboard.css";
 
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -146,7 +147,7 @@ export default function Dashboard() {
                     {order.table}
                   </div>
                   <div className="or-info">
-                    <div className="or-items">{order.customerName || "Guest"} · #{order.orderCode}</div>
+                    <div className="or-items">{(order as any).customerName || "Guest"} · #{order.orderCode}</div>
                     <div className="or-time">{timeAgo(order.createdAt)}</div>
                   </div>
                   {statusBadge(order.status)}

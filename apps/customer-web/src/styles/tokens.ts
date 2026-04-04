@@ -5,6 +5,8 @@
 export const colors = {
   teal50: "#f0fdfa",
   teal100: "#ccfbf1",
+  teal300: "#5eead4",
+  teal400: "#2dd4bf",
   teal500: "#14b8a6",
   teal600: "#0d9488",
   teal700: "#0f766e",
@@ -16,6 +18,7 @@ export const colors = {
   slate500: "#64748b",
   slate600: "#475569",
   slate700: "#334155",
+  slate800: "#1e293b",
   slate900: "#0f172a",
   white: "#ffffff",
   coral400: "#f97066",

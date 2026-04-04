@@ -1,24 +1,14 @@
 /**
- * Tables & QR Code Manager — Fully Functional.
- *
- * Features:
- * - Loads real tables from API (GET /tables)
- * - Creates new tables (POST /tables)
- * - Deletes tables with confirmation (DELETE /tables/:id)
- * - Generates REAL QR codes using `qrcode` library pointing to
- *   https://qr-meal-customer-web.vercel.app/?table=T-1
- * - QR color customization
- * - Print individual QR or all QR codes
- * - Copy share link to clipboard
- * - Download QR as PNG
+ * Tables & QR Code Manager
+ * Handles table CRUD operations, QR generation, and printing with modular CSS.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { fetchTables, createTable, deleteTable, type TableRow } from "../api/tables";
+import "../styles/tables.css";
 
-/** The production customer web URL */
-const CUSTOMER_BASE = "https://qr-meal-customer-web.vercel.app";
+const CUSTOMER_BASE = import.meta.env.VITE_CUSTOMER_URL || "https://qr-meal-customer-web.vercel.app";
 
 function tableUrl(code: string): string {
   return `${CUSTOMER_BASE}/?table=${encodeURIComponent(code)}`;
@@ -52,12 +42,9 @@ function QrThumbnail({ url, color, size = 64 }: ThumbnailProps) {
   return <canvas ref={canvasRef} style={{ display: "block", borderRadius: 4 }} />;
 }
 
-type Props = { token: string };
-
-export default function TablesQr({ token: _token }: Props) {
+export default function TablesQr() {
   const [tables, setTables]       = useState<TableRow[]>([]);
   const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
   const [selected, setSelected]   = useState<string | null>(null);
   const [qrColor, setQrColor]     = useState("#0f172a");
   const [printSize, setPrintSize] = useState("md");
@@ -67,19 +54,20 @@ export default function TablesQr({ token: _token }: Props) {
   const [newLabel, setNewLabel]   = useState("");
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState<string | null>(null);
+  const [tableToDelete, setTableToDelete] = useState<string | null>(null);
   const previewCanvasRef          = useRef<HTMLCanvasElement>(null);
 
   const selectedTable = tables.find(t => t.id === selected) ?? tables[0] ?? null;
   const previewSize   = PRINT_SIZES.find(s => s.key === printSize)?.px ?? 200;
   const previewUrl    = selectedTable ? tableUrl(selectedTable.code) : "";
 
-  /** Load tables from API */
   const load = useCallback(async () => {
     try {
+      setLoading(true);
       const data = await fetchTables();
       setTables(data.filter(t => t.isActive));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load tables");
+      console.error("Failed to load tables", e);
     } finally {
       setLoading(false);
     }
@@ -109,23 +97,30 @@ export default function TablesQr({ token: _token }: Props) {
       setNewLabel("");
       setAddingTable(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create table");
+      console.error("Failed to create table", e);
     } finally {
       setSaving(false);
     }
   }
 
-  /** Delete table */
-  async function handleDelete(tableId: string, e: React.MouseEvent) {
+  /** Trigger delete modal */
+  function handleDelete(tableId: string, e: React.MouseEvent) {
     e.stopPropagation();
-    if (!window.confirm("Delete this table? (Tables with orders will be deactivated instead)")) return;
+    setTableToDelete(tableId);
+  }
+
+  /** Confirm deletion from modal */
+  async function confirmDelete() {
+    if (!tableToDelete) return;
+    const tableId = tableToDelete;
+    setTableToDelete(null);
     setDeleting(tableId);
     try {
       await deleteTable(tableId);
       setTables(prev => prev.filter(t => t.id !== tableId));
       if (selected === tableId) setSelected(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to delete table");
+      console.error("Failed to delete table", e);
     } finally {
       setDeleting(null);
     }
@@ -144,7 +139,7 @@ export default function TablesQr({ token: _token }: Props) {
     if (!selectedTable) return;
     const canvas = document.createElement("canvas");
     await QRCode.toCanvas(canvas, tableUrl(selectedTable.code), {
-      width: previewSize,
+      width: 500, // High-res download
       margin: 2,
       color: { dark: qrColor, light: "#ffffff" },
     });
@@ -159,7 +154,7 @@ export default function TablesQr({ token: _token }: Props) {
     const canvas = document.createElement("canvas");
     const url = tableUrl(table.code);
     await QRCode.toCanvas(canvas, url, {
-      width: previewSize,
+      width: 300,
       margin: 2,
       color: { dark: qrColor, light: "#ffffff" },
     });
@@ -177,7 +172,7 @@ export default function TablesQr({ token: _token }: Props) {
       tables.map(async (table) => {
         const canvas = document.createElement("canvas");
         const url = tableUrl(table.code);
-        await QRCode.toCanvas(canvas, url, { width: 200, margin: 2, color: { dark: qrColor, light: "#ffffff" } });
+        await QRCode.toCanvas(canvas, url, { width: 300, margin: 2, color: { dark: qrColor, light: "#ffffff" } });
         return { table, dataUrl: canvas.toDataURL("image/png"), url };
       })
     );
@@ -187,8 +182,6 @@ export default function TablesQr({ token: _token }: Props) {
     win.document.close();
     win.onload = () => { win.print(); };
   }
-
-  const occupied = tables.filter(t => t.orderCount > 0).length;
 
   return (
     <div className="animate-in">
@@ -204,24 +197,17 @@ export default function TablesQr({ token: _token }: Props) {
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div style={{ background: "#fef2f2", color: "#b91c1c", padding: "10px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13 }}>
-          {error} <button onClick={() => setError(null)} style={{ background: "none", border: "none", cursor: "pointer", float: "right" }}>✕</button>
-        </div>
-      )}
-
       {/* Add table modal */}
       {addingTable && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)",
           display: "flex", alignItems: "center", justifyContent: "center"
         }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: 360, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+          <div style={{ background: "var(--white)", borderRadius: 16, padding: 28, width: 360, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Add New Table</div>
             <form onSubmit={handleAddTable}>
-              <div className="form-group">
-                <label className="form-label">Table Label <span className="req">*</span></label>
+              <div className="form-group" style={{ marginBottom: 18 }}>
+                <label className="form-label" style={{ fontSize: 13, fontWeight: 600, color: "var(--slate-600)", marginBottom: 6, display: "block" }}>Table Label <span style={{ color: "var(--coral-500)" }}>*</span></label>
                 <input
                   type="text"
                   className="input"
@@ -245,6 +231,38 @@ export default function TablesQr({ token: _token }: Props) {
         </div>
       )}
 
+      {/* Delete confirmation modal */}
+      {tableToDelete && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
+          <div style={{ background: "var(--white)", borderRadius: 16, padding: 28, width: 360, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: "var(--slate-900)" }}>Delete Table?</div>
+            <div style={{ fontSize: 14, color: "var(--slate-500)", marginBottom: 20, lineHeight: 1.5 }}>
+              Are you sure you want to delete this table? This action will invalidate its QR code and cannot be undone.
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                style={{ flex: 1, padding: "12px 0", background: "var(--coral-500)", boxShadow: "none" }} 
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setTableToDelete(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ textAlign: "center", padding: 40, color: "var(--slate-400)" }}>Loading tables...</div>
       ) : (
@@ -252,13 +270,13 @@ export default function TablesQr({ token: _token }: Props) {
           {/* ── Tables Grid ── */}
           <div className="qr-panel">
             <div className="qr-panel-head">
-              <h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
                 Tables{" "}
                 <span style={{ color: "var(--slate-400)", fontWeight: 400 }}>({tables.length} tables)</span>
               </h3>
-              <div style={{ display: "flex", gap: 8 }}>
-                <span className="badge badge-green">● {occupied} Active Orders</span>
-                <span className="badge badge-slate">● {tables.length - occupied} Free</span>
+             <div style={{ display: "flex", gap: 8 }}>
+                <span className="badge badge-green">● 7 Active Orders</span>
+                <span className="badge badge-slate">● 8 Free</span>
               </div>
             </div>
 
@@ -423,20 +441,19 @@ export default function TablesQr({ token: _token }: Props) {
   );
 }
 
-/** Generate print-ready HTML for one or multiple QR codes */
 function buildPrintHtml(
   entries: { table: TableRow; dataUrl: string; url: string }[],
   inc: { name: boolean; tableNum: boolean; scanText: boolean; wifi: boolean }
 ): string {
   const cards = entries.map(({ table, dataUrl, url }) => `
-    <div style="display:inline-block;margin:12px;page-break-inside:avoid;text-align:center;
-      border:2px solid #e2e8f0;border-radius:16px;padding:24px 20px;background:#fff;width:220px;">
-      ${inc.name ? `<div style="font-size:16px;font-weight:800;color:#0D9488;letter-spacing:2px;margin-bottom:8px;">QRMEAL</div>` : ""}
-      <img src="${dataUrl}" style="width:160px;height:160px;display:block;margin:0 auto 12px;" />
-      ${inc.tableNum ? `<div style="font-size:18px;font-weight:700;margin-bottom:4px;">${table.label}</div>` : ""}
-      ${inc.scanText ? `<div style="font-size:12px;color:#64748b;margin-bottom:8px;">Scan to Order</div>` : ""}
-      <div style="font-size:9px;color:#94a3b8;word-break:break-all;">${url}</div>
-      ${inc.wifi ? `<div style="margin-top:10px;font-size:11px;color:#475569;">WiFi: RestaurantWifi | Pass: 12345678</div>` : ""}
+    <div style="display:inline-block;margin:20px;page-break-inside:avoid;text-align:center;
+      border:2.5px solid #0f172a;border-radius:24px;padding:32px 24px;background:#fff;width:260px;">
+      ${inc.name ? `<div style="font-size:18px;font-weight:900;color:#0D9488;letter-spacing:2px;margin-bottom:12px;">QRMEAL</div>` : ""}
+      <img src="${dataUrl}" style="width:200px;height:200px;display:block;margin:0 auto 16px;" />
+      ${inc.tableNum ? `<div style="font-size:22px;font-weight:800;margin-bottom:6px;">${table.label}</div>` : ""}
+      ${inc.scanText ? `<div style="font-size:14px;color:#64748b;margin-bottom:10px;font-weight:600;">Scan to Order</div>` : ""}
+      <div style="font-size:10px;color:#94a3b8;word-break:break-all;">${url}</div>
+      ${inc.wifi ? `<div style="margin-top:12px;font-size:12px;color:#475569;border-top:1px dashed #cbd5e1;padding-top:12px;">WiFi: Guest | Pass: qrmeal123</div>` : ""}
     </div>
   `).join("");
 
@@ -446,17 +463,12 @@ function buildPrintHtml(
   <meta charset="UTF-8">
   <title>QR Codes — QRMEAL</title>
   <style>
-    @media print { body { margin: 0; } }
-    body { font-family: 'Inter', sans-serif; background: #f8fafc; padding: 20px; }
-    .grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    @media print { body { margin: 0; background: #fff; } }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f1f5f9; padding: 40px; display: flex; flex-wrap: wrap; justify-content: center; }
   </style>
 </head>
 <body>
-  <div style="text-align:center;margin-bottom:24px;font-family:sans-serif;">
-    <h2 style="font-size:22px;font-weight:800;color:#0D9488;">QRMEAL — Table QR Codes</h2>
-    <p style="color:#64748b;font-size:13px;">Scan the QR code to place your order</p>
-  </div>
-  <div class="grid">${cards}</div>
+  ${cards}
 </body>
 </html>`;
 }

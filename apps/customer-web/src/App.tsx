@@ -19,6 +19,7 @@ import CustomerLogin from "./pages/CustomerLogin";
 import Menu from "./pages/Menu";
 import Checkout from "./pages/Checkout";
 import OrderStatus from "./pages/OrderStatus";
+import { Toaster } from "react-hot-toast";
 import Welcome from "./pages/Welcome";
 import AddMore from "./pages/AddMore";
 import {

@@ -9,10 +9,14 @@
     "lint": "node -e \"console.log('admin lint placeholder')\""
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.11.2",
     "@types/qrcode": "^1.5.6",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.6.0",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.14.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

@@ -1,12 +1,10 @@
 /**
- * Public menu API (available items only).
+ * Public menu API client with global error handling.
  */
 
-import { API_BASE } from "../config/env";
+import { apiClient } from "../lib/api-client";
 import type { MenuItem } from "../types/menu";
 
 export async function fetchMenu(): Promise<MenuItem[]> {
-  const res = await fetch(`${API_BASE}/menu`);
-  if (!res.ok) throw new Error("Could not load menu");
-  return res.json();
+  return apiClient<MenuItem[]>("/menu");
 }

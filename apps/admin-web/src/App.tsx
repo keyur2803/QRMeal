@@ -1,134 +1,74 @@
 /**
- * Admin app — owner login, then sidebar shell layout.
- * Kitchen Display opens the standalone kitchen-web app (port 5174) in a new tab.
+ * Admin App Entry Point
+ * Handles global providers (Redux), Routing, and Notifications.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { useAdminAuth } from "./hooks/useAdminAuth";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Provider, useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
+import { store } from "./store";
+import type { AppDispatch } from "./store";
+import { checkAuth } from "./store/slices/authSlice";
+
 import AdminLogin from "./pages/AdminLogin";
 import Dashboard from "./pages/Dashboard";
 import MenuManagement from "./pages/MenuManagement";
 import TablesQr from "./pages/TablesQr";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-/** URL of the standalone Kitchen Display System app */
-const KDS_URL = import.meta.env.VITE_KDS_URL ?? "http://localhost:5174";
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<AdminLogin />} />
 
-type Tab = "dashboard" | "kitchen" | "menu" | "tables" | "analytics" | "settings";
+      {/* Protected Layout Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/menu" element={<MenuManagement />} />
+        <Route path="/tables" element={<TablesQr />} />
+        
+        {/* Placeholder for future features */}
+        <Route path="/analytics" element={<Placeholder title="Analytics" icon="📊" />} />
+        <Route path="/settings" element={<Placeholder title="Settings" icon="⚙️" />} />
+        
+        {/* Default redirect for authenticated users */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      </Route>
 
-const NAV_ITEMS: { key: Tab; label: string; icon: string; badge?: string }[] = [
-  { key: "dashboard", label: "Dashboard", icon: "📈" },
-  { key: "kitchen", label: "Kitchen Display", icon: "🍳" },
-  { key: "menu", label: "Menu Management", icon: "📋" },
-  { key: "tables", label: "QR Codes", icon: "🔲" },
-  { key: "analytics", label: "Analytics", icon: "📊" },
-  { key: "settings", label: "Settings", icon: "⚙️" },
-];
+      {/* Catch-all redirect to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
+
+function Placeholder({ title, icon }: { title: string; icon: string }) {
+  return (
+    <div style={{ textAlign: "center", padding: "60px 0", color: "var(--slate-400)" }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>{icon}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{title}</div>
+      <div style={{ fontSize: 14 }}>Coming soon — this feature is currently under development</div>
+    </div>
+  );
+}
+
+function AppRoutesWrapper() {
+  const dispatch = useDispatch<AppDispatch>();
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
+  
+  return <AppRoutes />;
+}
 
 export default function App() {
-  const { user, token, login, logout, isAuthenticated } = useAdminAuth();
-  const [tab, setTab] = useState<Tab>("dashboard");
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(t);
-  }, []);
-
-  const activeLabel = useMemo(() => {
-    const found = NAV_ITEMS.find((t) => t.key === tab);
-    return found?.label ?? "Admin";
-  }, [tab]);
-
-  if (!isAuthenticated || !token) {
-    return <AdminLogin login={login} />;
-  }
-
-
-  const initials = (user?.name ?? "OW")
-    .split(" ")
-    .map((w: string) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   return (
-    <div className="layout">
-      {/* Sidebar Navigation */}
-      <nav className="sidebar">
-        <div className="sb-brand">QRMEAL</div>
-
-        <div className="sb-nav">
-          {NAV_ITEMS.map(({ key, label, icon, badge }) => (
-            <button
-              key={key}
-              type="button"
-              id={`nav-${key}`}
-              className={`sb-item${tab === key ? " active" : ""}`}
-              onClick={() => {
-                if (key === "kitchen") { window.open(KDS_URL, "_blank", "noopener,noreferrer"); }
-                else { setTab(key); }
-              }}
-            >
-              <span style={{ width: 20, textAlign: "center", fontSize: 16 }}>{icon}</span>
-              {label}
-              {badge && <span className="sb-badge">{badge}</span>}
-            </button>
-          ))}
-        </div>
-
-        {/* Footer user block */}
-        <div className="sb-footer-user">
-          <div className="sb-user">
-            <div className="sb-avatar">{initials}</div>
-            <div>
-              <div className="sb-name">{user?.name ?? "Owner"}</div>
-              <div className="sb-role">Restaurant Owner</div>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="sb-item"
-            style={{ color: "var(--coral-400)", marginTop: 12 }}
-            onClick={logout}
-          >
-            <span style={{ width: 20, textAlign: "center" }}>🚪</span>
-            Log out
-          </button>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="main">
-        <div className="topbar">
-          <div className="topbar-title">{activeLabel}</div>
-          <div className="topbar-meta">
-            <span className="topbar-chip">
-              {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </span>
-            <span className="topbar-chip">{user?.name ?? "Owner"}</span>
-          </div>
-        </div>
-
-        <div className="main-inner">
-          {tab === "dashboard" && <Dashboard />}
-          {tab === "menu" && <MenuManagement token={token} />}
-          {tab === "tables" && <TablesQr token={token} />}
-          {tab === "analytics" && (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--slate-400)" }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Analytics</div>
-              <div style={{ fontSize: 14 }}>Coming soon — detailed revenue and order reports</div>
-            </div>
-          )}
-          {tab === "settings" && (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--slate-400)" }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>⚙️</div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Settings</div>
-              <div style={{ fontSize: 14 }}>Coming soon — restaurant profile and configurations</div>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+    <Provider store={store}>
+      <BrowserRouter>
+        <Toaster position="top-right" />
+        <AppRoutesWrapper />
+      </BrowserRouter>
+    </Provider>
   );
 }

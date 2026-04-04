@@ -1,8 +1,9 @@
 /**
- * Order placement API.
+ * Order placement and management API client.
+ * Uses standardized `apiClient` for toast-based error notifications.
  */
 
-import { API_BASE } from "../config/env";
+import { apiClient } from "../lib/api-client";
 
 export type OrderLine = { name: string; price: number; qty: number };
 
@@ -14,17 +15,6 @@ export type PlacedOrder = {
   status: string;
   total: number;
 };
-
-export async function placeOrder(table: string, customerName: string, items: OrderLine[]): Promise<PlacedOrder> {
-  const res = await fetch(`${API_BASE}/orders`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ table, customerName, items })
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { message?: string }).message || "Could not place order");
-  return data as PlacedOrder;
-}
 
 export type OrderHistoryEntry = { from: string | null; to: string; at: string };
 export type OrderDto = {
@@ -39,19 +29,20 @@ export type OrderDto = {
   createdAt: string;
 };
 
+export async function placeOrder(table: string, customerName: string, items: OrderLine[]): Promise<PlacedOrder> {
+  return apiClient<PlacedOrder>("/orders", {
+    method: "POST",
+    body: JSON.stringify({ table, customerName, items })
+  });
+}
+
 export async function fetchOrders(): Promise<OrderDto[]> {
-  const res = await fetch(`${API_BASE}/orders`);
-  if (!res.ok) throw new Error("Could not load orders");
-  return res.json();
+  return apiClient<OrderDto[]>("/orders");
 }
 
 export async function addItemsToOrder(orderId: string, items: OrderLine[]): Promise<OrderDto> {
-  const res = await fetch(`${API_BASE}/orders/${orderId}/items`, {
+  return apiClient<OrderDto>(`/orders/${orderId}/items`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ items })
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { message?: string }).message || "Could not add items");
-  return data as OrderDto;
 }

@@ -1,118 +1,82 @@
 /**
- * Owner login — uses POST /auth/login (seed: owner@qrmeal.dev / owner123).
+ * Admin Login Page
+ * Uses centralized Redux auth state and httpOnly cookie-based login.
  */
 
 import { useState } from "react";
-import { colors, radius } from "../styles/tokens";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { loginStaff } from "../api/auth";
+import { setUser } from "../store/slices/authSlice";
+import "../styles/login.css";
 
-type Props = { login: (email: string, password: string) => Promise<unknown> };
-
-export default function AdminLogin({ login }: Props) {
+export default function AdminLogin() {
   const [email, setEmail] = useState("owner@qrmeal.dev");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      const data = await loginStaff(email, password);
+      // Update Redux state
+      dispatch(setUser(data.user));
+      // Redirect to dashboard
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      // apiClient already handles toast.error, but we can set local state if needed
+      console.error("Login failed", err);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        background: colors.slate50
-      }}
-    >
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          width: "100%",
-          maxWidth: 400,
-          background: colors.white,
-          padding: 28,
-          borderRadius: radius.lg,
-          boxShadow: "0 4px 24px rgba(0,0,0,0.06)"
-        }}
-      >
-        <h1 style={{ fontSize: "1.35rem", marginBottom: 4, color: colors.teal600, fontWeight: 800, letterSpacing: 2 }}>
-          QRMEAL
-        </h1>
-        <p style={{ fontSize: 14, color: colors.slate500, marginBottom: 20 }}>Owner sign-in</p>
+    <div className="login-page">
+      <form className="login-card" onSubmit={handleSubmit}>
+        <h1 className="login-brand">QRMEAL</h1>
+        <p className="login-subtitle">Owner sign-in</p>
 
-        {error && (
-          <div style={{ background: "#fef2f2", color: "#b91c1c", padding: 10, borderRadius: radius.md, marginBottom: 14, fontSize: 14 }}>
-            {error}
-          </div>
-        )}
+        <div className="login-group">
+          <label className="login-label">Email</label>
+          <input
+            type="email"
+            autoComplete="username"
+            className="login-input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="owner@qrmeal.dev"
+          />
+        </div>
 
-        <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: colors.slate700 }}>Email</label>
-        <input
-          type="email"
-          autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{
-            width: "100%",
-            padding: "12px 14px",
-            borderRadius: radius.md,
-            border: `1px solid ${colors.slate200}`,
-            marginBottom: 14,
-            fontSize: 15,
-            boxSizing: "border-box"
-          }}
-        />
-
-        <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: colors.slate700 }}>Password</label>
-        <input
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{
-            width: "100%",
-            padding: "12px 14px",
-            borderRadius: radius.md,
-            border: `1px solid ${colors.slate200}`,
-            marginBottom: 20,
-            fontSize: 15,
-            boxSizing: "border-box"
-          }}
-        />
+        <div className="login-group">
+          <label className="login-label">Password</label>
+          <input
+            type="password"
+            autoComplete="current-password"
+            className="login-input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            placeholder="••••••••"
+          />
+        </div>
 
         <button
           type="submit"
+          className="login-btn"
           disabled={loading}
-          style={{
-            width: "100%",
-            padding: "12px",
-            fontSize: 16,
-            fontWeight: 600,
-            border: "none",
-            borderRadius: radius.md,
-            background: colors.teal600,
-            color: colors.white,
-            cursor: loading ? "wait" : "pointer"
-          }}
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
-        <p style={{ fontSize: 12, color: colors.slate400, marginTop: 14 }}>Dev seed: owner@qrmeal.dev / owner123</p>
+
+        <p className="login-footer">
+          Dev seed: owner@qrmeal.dev / owner123
+        </p>
       </form>
     </div>
   );

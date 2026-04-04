@@ -8,6 +8,7 @@ import "dotenv/config";
 import path from "path";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import type { Server } from "node:http";
 import { env } from "./config/env.js";
 import { prisma } from "./db/prisma.js";
@@ -27,7 +28,13 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ── Global middleware ──────────────────────────────────────────────
 
-app.use(cors());
+// FOR NOW ALLOW ALL
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+
+app.use(cookieParser());
 app.use(express.json());
 
 // ── Health check (quick DB ping) ──────────────────────────────────

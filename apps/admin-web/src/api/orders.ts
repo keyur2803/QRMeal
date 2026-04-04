@@ -1,25 +1,37 @@
 /**
- * Order API client for admin dashboard.
+ * Dashboard / Order Stats API client.
  */
 
-import { API_BASE } from "../config/env";
+import { apiClient } from "../lib/api-client";
 import type { OrderSummary } from "../types/order";
 
+export type OrderStats = {
+  todayRevenue: number;
+  activeOrders: number;
+  averageCheck: number;
+  totalOrders: number;
+  revenueChange: number;
+  ordersChange: number;
+};
+
+export type RecentOrder = {
+  id: string;
+  orderCode: string;
+  table: string;
+  total: number;
+  status: string;
+  createdAt: string;
+  items: { name: string; qty: number }[];
+};
+
 export async function fetchOrders(): Promise<OrderSummary[]> {
-  const res = await fetch(`${API_BASE}/orders`);
-  if (!res.ok) throw new Error("Failed to load orders");
-  return res.json();
+  return apiClient<OrderSummary[]>("/orders");
 }
 
-export async function patchOrderStatus(
-  orderId: string,
-  status: string
-): Promise<OrderSummary> {
-  const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status, changedBy: "kitchen" }),
-  });
-  if (!res.ok) throw new Error("Failed to update order status");
-  return res.json();
+export async function fetchOrderStats(): Promise<OrderStats> {
+  return apiClient<OrderStats>("/orders/stats/summary");
+}
+
+export async function fetchRecentOrders(): Promise<RecentOrder[]> {
+  return apiClient<RecentOrder[]>("/orders/recent");
 }

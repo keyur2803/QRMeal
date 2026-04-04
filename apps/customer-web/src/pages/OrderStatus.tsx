@@ -310,7 +310,7 @@ export default function OrderStatus({
                 style={{
                   fontSize: 12,
                   color: colors.teal600,
-                  fontWeight: 800,
+                  fontWeight: 600,
                   marginBottom: 6,
                   textTransform: "uppercase",
                   letterSpacing: 0.5,
@@ -417,6 +417,7 @@ export default function OrderStatus({
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          animation: active ? "pulse 2s ease-in-out infinite" : "none",
                         }}
                       >
                         {(done || active) && (
@@ -433,9 +434,9 @@ export default function OrderStatus({
                       <div
                         style={{
                           fontSize: 14,
-                          fontWeight: 800,
+                          fontWeight: 600,
                           color:
-                            done || active ? colors.slate900 : colors.slate400,
+                            done || active ? colors.slate800 : colors.slate400,
                         }}
                       >
                         {title}
@@ -471,8 +472,8 @@ export default function OrderStatus({
               <div
                 style={{
                   fontSize: 14,
-                  fontWeight: 900,
-                  marginBottom: 12,
+                  fontWeight: 700,
+                  marginBottom: 14,
                   color: colors.slate700,
                 }}
               >
@@ -492,7 +493,7 @@ export default function OrderStatus({
                   <div
                     style={{
                       fontSize: 13,
-                      fontWeight: 700,
+                      fontWeight: 500,
                       display: "flex",
                       alignItems: "center",
                       gap: 8,
@@ -503,7 +504,7 @@ export default function OrderStatus({
                         width: 8,
                         height: 8,
                         borderRadius: "50%",
-                        background: colors.amber400,
+                        background: [colors.amber400, colors.teal400, colors.green500][i.name.length % 3],
                       }}
                     />
                     {i.name}
@@ -512,7 +513,6 @@ export default function OrderStatus({
                     style={{
                       fontSize: 12,
                       color: colors.slate400,
-                      fontWeight: 700,
                     }}
                   >
                     x{i.qty}
@@ -539,12 +539,13 @@ export default function OrderStatus({
               onClick={onAddMore}
               style={{
                 width: "100%",
-                padding: 16,
+                padding: 14,
                 borderRadius: radius.lg,
-                border: `1.5px solid ${colors.slate200}`,
+                border: `1.5px solid ${colors.teal300}`,
                 background: colors.white,
-                color: colors.slate700,
-                fontWeight: 900,
+                color: colors.teal600,
+                fontSize: 14,
+                fontWeight: 600,
                 cursor: "pointer",
                 marginBottom: 10,
               }}
@@ -556,12 +557,13 @@ export default function OrderStatus({
               onClick={() => window.alert("Waiter has been notified.")}
               style={{
                 width: "100%",
-                padding: 14,
+                padding: 8,
                 borderRadius: radius.lg,
                 border: "none",
                 background: "transparent",
                 color: colors.slate400,
-                fontWeight: 800,
+                fontSize: 13,
+                fontWeight: 600,
                 cursor: "pointer",
                 marginBottom: 10,
               }}

@@ -1,12 +1,21 @@
 /**
- * Menu management — exact match to admin-products.html design.
+ * Menu Management Page
+ * Handles menu item CRUD operations with secure cookie auth and modular CSS.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { addMenuItem, addMenuItemWithUpload, deleteMenuItem, fetchAdminMenu, patchMenuItem, uploadMenuItemImage } from "../api/menu";
+import { 
+  addMenuItem, 
+  addMenuItemWithUpload, 
+  deleteMenuItem, 
+  fetchAdminMenu, 
+  patchMenuItem, 
+  uploadMenuItemImage 
+} from "../api/menu";
 import { menuImageSrc } from "../lib/imageUrl";
 import type { MenuItem } from "../types/menu";
 import ConfirmModal from "../components/ConfirmModal";
+import "../styles/menu.css";
 
 const AVAILABLE_TAGS = [
   { id: "Vegetarian", label: "Vegetarian", icon: "🌿" },
@@ -28,15 +37,13 @@ function categoryBadgeClass(cat: string) {
   return "badge-teal";
 }
 
-type Props = { token: string };
-
-export default function MenuManagement({ token }: Props) {
+export default function MenuManagement() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All Categories");
 
+  // Form State
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -51,6 +58,36 @@ export default function MenuManagement({ token }: Props) {
   const [saving, setSaving] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [confirm, setConfirm] = useState<null | { kind: "edit" | "delete"; item: MenuItem }>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAdminMenu();
+      setItems(data);
+    } catch (e) {
+      console.error("Failed to load menu", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const categories = useMemo(() => {
+    const s = new Set(items.map((i) => i.category));
+    return ["All Categories", ...Array.from(s).sort()];
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((i) => {
+      if (catFilter !== "All Categories" && i.category !== catFilter) return false;
+      if (!q) return true;
+      return (`${i.name} ${i.category}`).toLowerCase().includes(q);
+    });
+  }, [items, search, catFilter]);
 
   function startEdit(item: MenuItem) {
     setEditingItem(item);
@@ -80,86 +117,41 @@ export default function MenuManagement({ token }: Props) {
     setImageFile(null);
   }
 
-  const load = useCallback(async () => {
-    setError(null);
-    const data = await fetchAdminMenu(token);
-    setItems(data);
-  }, [token]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        await load();
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Load failed");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [load]);
-
-  const categories = useMemo(() => {
-    const s = new Set(items.map((i) => i.category));
-    return ["All Categories", ...Array.from(s).sort()];
-  }, [items]);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return items.filter((i) => {
-      if (catFilter !== "All Categories" && i.category !== catFilter) return false;
-      if (!q) return true;
-      return (`${i.name} ${i.category}`).toLowerCase().includes(q);
-    });
-  }, [items, search, catFilter]);
-
-  async function handleAdd(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const p = parseFloat(price);
     if (!name.trim() || Number.isNaN(p) || !prepTime.trim()) return;
+    
     setSaving(true);
-    setError(null);
     try {
       const customizations = [customization1.trim(), customization2.trim()].filter(Boolean);
-      
+      const payload = {
+        name: name.trim(),
+        category: category.trim() || "General",
+        price: p,
+        description: description.trim() || undefined,
+        prepTime: prepTime.trim(),
+        calories: calories.trim() || undefined,
+        dietaryTags,
+        customizations
+      };
+
       if (editingItem) {
-        const updated = await patchMenuItem(token, editingItem.id, {
-          name: name.trim(),
-          category: category.trim() || "General",
-          price: p,
-          description: description.trim() || null,
-          prepTime: prepTime.trim(),
-          calories: calories.trim() || null,
-          dietaryTags,
-          customizations
-        });
-        let finalItem = updated;
+        let updated = await patchMenuItem(editingItem.id, payload);
         if (imageFile) {
-          finalItem = await uploadMenuItemImage(token, editingItem.id, imageFile);
+          updated = await uploadMenuItemImage(editingItem.id, imageFile);
         }
-        setItems((prev) => prev.map((x) => (x.id === finalItem.id ? finalItem : x)).sort((a, b) => a.name.localeCompare(b.name)));
+        setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)).sort((a, b) => a.name.localeCompare(b.name)));
         cancelEdit();
       } else {
-        const basePayload = {
-          category: category.trim() || "General",
-          name: name.trim(),
-          price: p,
-          description: description.trim() || undefined,
-          prepTime: prepTime.trim(),
-          calories: calories.trim() || null,
-          dietaryTags,
-          customizations
-        };
         const created = imageFile
-          ? await addMenuItemWithUpload(token, { ...basePayload, imageFile })
-          : await addMenuItem(token, basePayload);
+          ? await addMenuItemWithUpload({ ...payload, description: payload.description || undefined, imageFile })
+          : await addMenuItem(payload);
         setItems((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
-        cancelEdit(); // resets form cleanly
+        cancelEdit();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      console.error("Save failed", err);
     } finally {
       setSaving(false);
     }
@@ -167,63 +159,61 @@ export default function MenuManagement({ token }: Props) {
 
   async function toggleAvailability(item: MenuItem) {
     try {
-      const updated = await patchMenuItem(token, item.id, { isAvailable: !item.isAvailable });
+      const updated = await patchMenuItem(item.id, { isAvailable: !item.isAvailable });
       setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Update failed");
+      console.error("Update failed", err);
     }
   }
 
   async function handleDeleteConfirmed(item: MenuItem) {
     try {
-      setError(null);
-      await deleteMenuItem(token, item.id);
+      await deleteMenuItem(item.id);
       setItems((prev) => prev.filter((x) => x.id !== item.id));
       if (editingItem?.id === item.id) cancelEdit();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      console.error("Delete failed", err);
     }
   }
 
   return (
-    <>
-      <div className="page-header">
+    <div className="animate-in">
+      <header className="page-header">
         <div>
-          <div className="page-title">Menu Management</div>
-          <div className="page-subtitle">Add, edit, and organize your restaurant menu</div>
+          <h1 className="page-title">Menu Management</h1>
+          <p className="page-subtitle">Add, edit, and organize your restaurant menu</p>
         </div>
-      </div>
-
-      {error && (
-        <div style={{ background: "#fef2f2", color: "#b91c1c", padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 14 }}>
-          {error}
-        </div>
-      )}
+      </header>
 
       <div className="content-split">
         {/* Products List Panel */}
         <div className="products-panel">
           <div className="panel-head">
             <h3>All Menu Items <span style={{ color: "var(--slate-400)", fontWeight: 400 }}>({items.length})</span></h3>
-            <div className="filter-row">
-              <div className="search-box" style={{ padding: "8px 14px" }}>
-                <span className="icon" style={{ fontSize: 14 }}>🔍</span>
+            <div className="filter-row" style={{ display: 'flex', gap: 12 }}>
+              <div className="search-box">
                 <input 
                   type="text" 
+                  className="input"
                   placeholder="Search items..." 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: 100 }}
+                  style={{ width: 140, padding: '8px 12px', fontSize: 13 }}
                 />
               </div>
-              <select className="input" value={catFilter} onChange={(e) => setCatFilter(e.target.value)} style={{ width: "auto", padding: "8px 36px 8px 12px", fontSize: 13 }}>
+              <select 
+                className="input" 
+                value={catFilter} 
+                onChange={(e) => setCatFilter(e.target.value)} 
+                style={{ width: "auto", padding: "8px 12px", fontSize: 13 }}
+              >
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
           
           {loading ? (
-             <div style={{ padding: 24, textAlign: 'center', color: 'var(--slate-400)' }}>Loading menu items...</div>
+             <div style={{ padding: 48, textAlign: 'center', color: 'var(--slate-400)' }}>Loading menu...</div>
           ) : (
             <table className="product-table">
               <thead>
@@ -231,13 +221,13 @@ export default function MenuManagement({ token }: Props) {
                   <th>Item</th>
                   <th>Price</th>
                   <th>Category</th>
-                  <th>Available</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(item => (
-                  <tr key={item.id} style={{ opacity: item.isAvailable ? 1 : 0.5 }}>
+                  <tr key={item.id} style={{ opacity: item.isAvailable ? 1 : 0.6 }}>
                     <td>
                       <div className="prod-cell">
                         <div className="prod-img">
@@ -249,9 +239,7 @@ export default function MenuManagement({ token }: Props) {
                         </div>
                         <div>
                           <div className="prod-name">{item.name}</div>
-                          <div className="prod-cat truncate" style={{ maxWidth: 200, WebkitLineClamp: 1, textOverflow: "ellipsis" }}>
-                            {item.description || "No description"}
-                          </div>
+                          <div className="prod-cat">{item.category}</div>
                         </div>
                       </div>
                     </td>
@@ -279,25 +267,25 @@ export default function MenuManagement({ token }: Props) {
             {editingItem ? '✏️ Edit Item' : '➕ Add New Item'}
           </div>
 
-          <form onSubmit={handleAdd}>
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label">Item Name <span className="req">*</span></label>
-              <input type="text" className="input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g., Mushroom Risotto" required />
+              <input type="text" className="input" value={name} onChange={e => setName(e.target.value)} required />
             </div>
 
             <div className="form-group">
               <label className="form-label">Description</label>
-              <textarea className="input" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe the dish, ingredients, cooking style..."></textarea>
+              <textarea className="input" value={description} onChange={e => setDescription(e.target.value)} style={{ height: 80 }}></textarea>
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Price <span className="req">*</span></label>
-                <input type="number" step="0.01" className="input" value={price} onChange={e => setPrice(e.target.value)} placeholder="$0.00" required />
+                <input type="number" step="0.01" className="input" value={price} onChange={e => setPrice(e.target.value)} required />
               </div>
               <div className="form-group">
                 <label className="form-label">Category <span className="req">*</span></label>
-                <input type="text" className="input" value={category} onChange={e => setCategory(e.target.value)} placeholder="Pizza, Pasta..." required list="cat-opts" />
+                <input type="text" className="input" value={category} onChange={e => setCategory(e.target.value)} required list="cat-opts" />
                 <datalist id="cat-opts">
                   {categories.filter(c => c !== "All Categories").map(c => <option key={c} value={c} />)}
                 </datalist>
@@ -345,15 +333,9 @@ export default function MenuManagement({ token }: Props) {
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Customization Options</label>
-              <input type="text" className="input" value={customization1} onChange={e => setCustomization1(e.target.value)} placeholder="e.g., Size: Small, Medium, Large" style={{ marginBottom: 8 }} />
-              <input type="text" className="input" value={customization2} onChange={e => setCustomization2(e.target.value)} placeholder="e.g., Add-ons: Extra Cheese (+$2), Bacon (+$3)" />
-            </div>
-
-            <div className="form-actions">
+            <div className="form-actions" style={{ display: 'flex', gap: 12, marginTop: 24 }}>
               <button disabled={saving} type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                {saving ? "Saving..." : editingItem ? "Save Item" : "Add Item"}
+                {saving ? "Saving..." : editingItem ? "Update" : "Create"}
               </button>
               {editingItem && (
                  <button type="button" onClick={cancelEdit} className="btn btn-secondary">Cancel</button>
@@ -365,16 +347,10 @@ export default function MenuManagement({ token }: Props) {
 
       <ConfirmModal
         open={confirm !== null}
-        title={
-          confirm?.kind === "delete"
-            ? "Delete menu item?"
-            : "Edit menu item?"
-        }
-        message={
-          confirm?.kind === "delete"
-            ? `This will permanently delete “${confirm.item.name}”.`
-            : `Open “${confirm?.item.name}” in edit mode?`
-        }
+        title={confirm?.kind === "delete" ? "Delete Item?" : "Edit Item?"}
+        message={confirm?.kind === "delete" 
+          ? `Are you sure you want to delete ${confirm.item.name}?` 
+          : `Do you want to edit ${confirm?.item.name}?`}
         confirmText={confirm?.kind === "delete" ? "Delete" : "Edit"}
         danger={confirm?.kind === "delete"}
         onClose={() => setConfirm(null)}
@@ -384,11 +360,11 @@ export default function MenuManagement({ token }: Props) {
           if (!next) return;
           if (next.kind === "edit") {
             startEdit(next.item);
-            return;
+          } else {
+            await handleDeleteConfirmed(next.item);
           }
-          await handleDeleteConfirmed(next.item);
         }}
       />
-    </>
+    </div>
   );
 }

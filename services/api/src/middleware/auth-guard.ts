@@ -29,12 +29,19 @@ declare global {
 export function requireAuth(...allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const header = req.headers.authorization;
-    if (!header?.startsWith("Bearer ")) {
+    let token = "";
+    if (header?.startsWith("Bearer ")) {
+      token = header.slice(7);
+    } else if (req.cookies?.qrmeal_token) {
+      token = req.cookies.qrmeal_token;
+    }
+
+    if (!token) {
       return res.status(401).json({ message: "Missing auth token" });
     }
 
     try {
-      const payload = jwt.verify(header.slice(7), env.jwtSecret) as TokenPayload;
+      const payload = jwt.verify(token, env.jwtSecret) as TokenPayload;
 
       if (allowedRoles.length > 0 && !allowedRoles.includes(payload.role)) {
         return res.status(403).json({ message: "Forbidden" });

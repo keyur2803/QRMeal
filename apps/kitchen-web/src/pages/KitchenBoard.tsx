@@ -5,8 +5,10 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { fetchBoard, updateOrderStatus } from "../api/kitchen";
 import type { KitchenBoard, KitchenOrder, KitchenStatus } from "../types/order";
+import { API_BASE } from "../config/env";
 import "../styles/kds.css";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
@@ -29,6 +31,7 @@ function elapsed(createdAt: string): string {
 
 export default function KitchenBoard() {
   const [board, setBoard] = useState<KitchenBoard>({ pending: [], preparing: [], ready: [] });
+  const [authError, setAuthError] = useState(false);
   const [clock, setClock] = useState("");
   const [tick, setTick] = useState(0);
   const draggingId = useRef<string | null>(null);
@@ -54,8 +57,12 @@ export default function KitchenBoard() {
     try {
       const data = await fetchBoard();
       setBoard(data);
-    } catch {
-      // keep demo/current board on error
+      setAuthError(false);
+    } catch (err) {
+      if (err instanceof Error && err.message === "UNAUTHORIZED") {
+        setAuthError(true);
+      }
+      // keep demo/current board on other errors
     }
   }, []);
 
@@ -205,6 +212,11 @@ export default function KitchenBoard() {
 
   // ── render ─────────────────────────────────────────────────────────────────
 
+  if (authError) {
+    // Mid-session token drop or missed fetch
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className="kds-page">
       {/* Header */}
@@ -218,6 +230,17 @@ export default function KitchenBoard() {
           <div className="kds-chip preparing">Preparing: {counts.preparing}</div>
           <div className="kds-chip ready">Ready: {counts.ready}</div>
           <div className="kds-clock">🕐 {clock}</div>
+          <button 
+            onClick={() => {
+              fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" })
+                .catch(() => {})
+                .finally(() => window.location.reload());
+            }}
+            style={{ marginLeft: 16, background: "transparent", color: "#f97066", border: "1.5px solid #f97066", padding: "4px 12px", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13 }}
+            title="Log out"
+          >
+            Log Out
+          </button>
         </div>
       </header>
 

@@ -8,6 +8,7 @@ import { useCart } from "../context/CartContext";
 import { menuImageSrc } from "../lib/imageUrl";
 import { colors, radius, shadowSm } from "../styles/tokens";
 import type { MenuItem } from "../types/menu";
+import ItemDetails from "./ItemDetails";
 
 const FOOD_ICONS = ["\uD83C\uDF55", "\uD83C\uDF5C", "\uD83E\uDD57", "\uD83C\uDF56", "\uD83C\uDF36", "\uD83C\uDF79", "\uD83E\uDDC0"];
 
@@ -22,7 +23,8 @@ export default function Menu({ tableCode, onViewCart }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("All");
-  const { addItem, itemCount, subtotal } = useCart();
+  const { lines, setQty, addItem, itemCount, subtotal } = useCart();
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +63,10 @@ export default function Menu({ tableCode, onViewCart }: Props) {
 
   function iconFor(index: number) {
     return FOOD_ICONS[index % FOOD_ICONS.length];
+  }
+
+  if (selectedItem) {
+    return <ItemDetails item={selectedItem} onBack={() => setSelectedItem(null)} onViewCart={onViewCart} />;
   }
 
   return (
@@ -206,9 +212,13 @@ export default function Menu({ tableCode, onViewCart }: Props) {
               <p style={{ color: colors.slate500, fontSize: 14 }}>No items match your search.</p>
             )}
 
-            {filtered.map((item, idx) => (
+            {filtered.map((item, idx) => {
+              const cartLine = lines.find((l) => l.menuItemId === item.id);
+              const qty = cartLine?.qty || 0;
+              return (
               <article
                 key={item.id}
+                onClick={() => setSelectedItem(item)}
                 style={{
                   background: colors.white,
                   borderRadius: radius.lg,
@@ -216,7 +226,9 @@ export default function Menu({ tableCode, onViewCart }: Props) {
                   display: "flex",
                   gap: 14,
                   marginBottom: 10,
-                  boxShadow: shadowSm
+                  boxShadow: shadowSm,
+                  cursor: "pointer",
+                  WebkitTapHighlightColor: "transparent"
                 }}
               >
                 <div
@@ -252,28 +264,55 @@ export default function Menu({ tableCode, onViewCart }: Props) {
                   )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: colors.teal600 }}>₹{item.price.toFixed(0)}</div>
-                    <button
-                      type="button"
-                      onClick={() => addItem(item)}
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 10,
-                        border: "none",
-                        background: colors.teal50,
-                        color: colors.teal600,
-                        fontSize: 18,
-                        fontWeight: 600,
-                        cursor: "pointer"
-                      }}
-                      aria-label={`Add ${item.name}`}
-                    >
-                      +
-                    </button>
+                    {qty > 0 ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, background: colors.teal50, borderRadius: 10, padding: 4 }}>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setQty(item.id, qty - 1); }}
+                          style={{
+                            width: 28, height: 28, borderRadius: 8, border: "none",
+                            background: colors.teal600, color: colors.white, fontSize: 16, fontWeight: 700, cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                          }}
+                        >-</button>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: colors.teal700, minWidth: 16, textAlign: "center" }}>{qty}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setQty(item.id, qty + 1); }}
+                          style={{
+                            width: 28, height: 28, borderRadius: 8, border: "none",
+                            background: colors.teal600, color: colors.white, fontSize: 16, fontWeight: 700, cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                          }}
+                        >+</button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); addItem(item); }}
+                        style={{
+                          height: 36,
+                          width: 104,
+                          borderRadius: 10,
+                          border: "none",
+                          background: colors.teal50,
+                          color: colors.teal700,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 4
+                        }}
+                        aria-label={`Add ${item.name}`}
+                      >
+                        ADD <span style={{ fontSize: 16 }}>+</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </>
         )}
       </div>

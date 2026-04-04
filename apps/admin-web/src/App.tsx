@@ -1,90 +1,134 @@
 /**
- * Admin app — owner login, then tabbed shell.
+ * Admin app — owner login, then sidebar shell layout.
+ * Kitchen Display opens the standalone kitchen-web app (port 5174) in a new tab.
  */
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAdminAuth } from "./hooks/useAdminAuth";
 import AdminLogin from "./pages/AdminLogin";
 import Dashboard from "./pages/Dashboard";
 import MenuManagement from "./pages/MenuManagement";
 import TablesQr from "./pages/TablesQr";
-import { colors } from "./styles/tokens";
 
-type Tab = "dashboard" | "menu" | "tables";
+/** URL of the standalone Kitchen Display System app */
+const KDS_URL = import.meta.env.VITE_KDS_URL ?? "http://localhost:5174";
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: "dashboard", label: "Dashboard" },
-  { key: "menu", label: "Menu" },
-  { key: "tables", label: "Tables & QR" }
+type Tab = "dashboard" | "kitchen" | "menu" | "tables" | "analytics" | "settings";
+
+const NAV_ITEMS: { key: Tab; label: string; icon: string; badge?: string }[] = [
+  { key: "dashboard", label: "Dashboard", icon: "📈" },
+  { key: "kitchen", label: "Kitchen Display", icon: "🍳" },
+  { key: "menu", label: "Menu Management", icon: "📋" },
+  { key: "tables", label: "QR Codes", icon: "🔲" },
+  { key: "analytics", label: "Analytics", icon: "📊" },
+  { key: "settings", label: "Settings", icon: "⚙️" },
 ];
 
 export default function App() {
   const { user, token, login, logout, isAuthenticated } = useAdminAuth();
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  const activeLabel = useMemo(() => {
+    const found = NAV_ITEMS.find((t) => t.key === tab);
+    return found?.label ?? "Admin";
+  }, [tab]);
 
   if (!isAuthenticated || !token) {
     return <AdminLogin login={login} />;
   }
 
-  return (
-    <div style={{ fontFamily: "system-ui, sans-serif", minHeight: "100vh", background: colors.slate50 }}>
-      <header
-        style={{
-          background: colors.white,
-          borderBottom: `1px solid ${colors.slate200}`,
-          padding: "12px 20px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 12
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: colors.teal600, letterSpacing: 2 }}>QRMEAL</div>
-          <div style={{ fontSize: 13, color: colors.slate500 }}>{user?.name} · Owner</div>
-        </div>
-        <button
-          type="button"
-          onClick={logout}
-          style={{
-            padding: "8px 14px",
-            borderRadius: 8,
-            border: `1px solid ${colors.slate200}`,
-            background: colors.white,
-            cursor: "pointer",
-            fontSize: 14
-          }}
-        >
-          Log out
-        </button>
-      </header>
 
-      <div style={{ padding: "20px 24px", maxWidth: 1200, margin: "0 auto" }}>
-        <nav style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
-          {TABS.map(({ key, label }) => (
+  const initials = (user?.name ?? "OW")
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="layout">
+      {/* Sidebar Navigation */}
+      <nav className="sidebar">
+        <div className="sb-brand">QRMEAL</div>
+
+        <div className="sb-nav">
+          {NAV_ITEMS.map(({ key, label, icon, badge }) => (
             <button
               key={key}
               type="button"
-              onClick={() => setTab(key)}
-              style={{
-                padding: "8px 14px",
-                borderRadius: 8,
-                border: tab === key ? `2px solid ${colors.teal600}` : `1px solid ${colors.slate200}`,
-                background: tab === key ? colors.teal50 : colors.white,
-                cursor: "pointer",
-                fontSize: 14
+              id={`nav-${key}`}
+              className={`sb-item${tab === key ? " active" : ""}`}
+              onClick={() => {
+                if (key === "kitchen") { window.open(KDS_URL, "_blank", "noopener,noreferrer"); }
+                else { setTab(key); }
               }}
             >
+              <span style={{ width: 20, textAlign: "center", fontSize: 16 }}>{icon}</span>
               {label}
+              {badge && <span className="sb-badge">{badge}</span>}
             </button>
           ))}
-        </nav>
+        </div>
 
-        {tab === "dashboard" && <Dashboard />}
-        {tab === "menu" && <MenuManagement token={token} />}
-        {tab === "tables" && <TablesQr />}
-      </div>
+        {/* Footer user block */}
+        <div className="sb-footer-user">
+          <div className="sb-user">
+            <div className="sb-avatar">{initials}</div>
+            <div>
+              <div className="sb-name">{user?.name ?? "Owner"}</div>
+              <div className="sb-role">Restaurant Owner</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="sb-item"
+            style={{ color: "var(--coral-400)", marginTop: 12 }}
+            onClick={logout}
+          >
+            <span style={{ width: 20, textAlign: "center" }}>🚪</span>
+            Log out
+          </button>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="main">
+        <div className="topbar">
+          <div className="topbar-title">{activeLabel}</div>
+          <div className="topbar-meta">
+            <span className="topbar-chip">
+              {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <span className="topbar-chip">{user?.name ?? "Owner"}</span>
+          </div>
+        </div>
+
+        <div className="main-inner">
+          {tab === "dashboard" && <Dashboard />}
+          {tab === "menu" && <MenuManagement token={token} />}
+          {tab === "tables" && <TablesQr token={token} />}
+          {tab === "analytics" && (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--slate-400)" }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Analytics</div>
+              <div style={{ fontSize: 14 }}>Coming soon — detailed revenue and order reports</div>
+            </div>
+          )}
+          {tab === "settings" && (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--slate-400)" }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>⚙️</div>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Settings</div>
+              <div style={{ fontSize: 14 }}>Coming soon — restaurant profile and configurations</div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

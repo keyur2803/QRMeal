@@ -5,7 +5,7 @@
 
 import { useCallback, useState } from "react";
 import type { CustomerUser } from "../types/user";
-import { loadStoredUser, clearSession } from "../lib/storage";
+import { loadStoredUser, clearSession, clearActiveOrder } from "../lib/storage";
 
 export function useAuth() {
   const [user, setUser] = useState<CustomerUser | null>(() => loadStoredUser());
@@ -17,6 +17,7 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     clearSession();
+    clearActiveOrder();
     setUser(null);
   }, []);
 

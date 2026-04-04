@@ -3,22 +3,25 @@
  */
 
 import { useState } from "react";
-import { placeOrder } from "../api/orders";
+import { placeOrder, type PlacedOrder } from "../api/orders";
 import { useCart } from "../context/CartContext";
+import { menuImageSrc } from "../lib/imageUrl";
 import { colors, radius } from "../styles/tokens";
 
 type Props = {
   tableCode: string;
-  onTableCodeChange: (code: string) => void;
   customerName: string;
-  onOrderPlaced: () => void;
+  onBack: () => void;
+  onAddMore: () => void;
+  onOrderPlaced: (order: PlacedOrder) => void;
 };
 
-export default function Checkout({ tableCode, onTableCodeChange, customerName, onOrderPlaced }: Props) {
+const shadowXs = "0 1px 2px rgba(0,0,0,0.05)";
+
+export default function Checkout({ tableCode, customerName, onBack, onAddMore, onOrderPlaced }: Props) {
   const { lines, setQty, subtotal, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ orderCode: string } | null>(null);
 
   async function handlePlaceOrder(e: React.FormEvent) {
     e.preventDefault();
@@ -32,8 +35,7 @@ export default function Checkout({ tableCode, onTableCodeChange, customerName, o
         lines.map((l) => ({ name: l.name, price: l.price, qty: l.qty }))
       );
       clear();
-      setDone({ orderCode: order.orderCode });
-      onOrderPlaced();
+      onOrderPlaced(order);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Order failed");
     } finally {
@@ -41,134 +43,231 @@ export default function Checkout({ tableCode, onTableCodeChange, customerName, o
     }
   }
 
-  if (done) {
-    return (
-      <section style={{ textAlign: "center", padding: "24px 0" }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }} aria-hidden>
-          &#10003;
-        </div>
-        <h2 style={{ fontSize: "1.2rem", marginBottom: 8 }}>Order placed</h2>
-        <p style={{ color: colors.slate500, marginBottom: 8 }}>Show this code at the counter to pay.</p>
-        <p style={{ fontSize: 22, fontWeight: 800, color: colors.teal600, letterSpacing: 1 }}>{done.orderCode}</p>
-      </section>
-    );
-  }
+  const itemCount = lines.reduce((s, l) => s + l.qty, 0);
 
   return (
-    <section>
-      <h2 style={{ fontSize: "1.1rem", marginBottom: 16, color: colors.slate900 }}>Checkout</h2>
-      <p style={{ fontSize: 13, color: colors.slate500, marginBottom: 16 }}>Payment: pay at counter after your order is prepared.</p>
+    <div style={{ margin: "0 -16px", background: colors.slate50, minHeight: "calc(100vh - 32px)" }}>
+      <div
+        style={{
+          background: colors.white,
+          padding: "14px 16px",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          borderBottom: `1px solid ${colors.slate100}`,
+          position: "sticky",
+          top: 0,
+          zIndex: 10
+        }}
+      >
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            fontSize: 20,
+            cursor: "pointer",
+            color: colors.slate600,
+            background: "none",
+            border: "none",
+            padding: 0
+          }}
+          aria-label="Back"
+        >
+          ←
+        </button>
+        <div style={{ fontSize: 18, fontWeight: 700, flex: 1, color: colors.slate900 }}>Your Order</div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          background: "#f0fdfa", border: "1px solid #5eead4",
+          borderRadius: 999, padding: "4px 10px", fontSize: 12, fontWeight: 600, color: "#0f766e"
+        }}>
+          🪑 {tableCode}
+        </div>
+      </div>
 
       <form onSubmit={handlePlaceOrder}>
-        <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: colors.slate700 }}>
-          Table code
-        </label>
-        <input
-          value={tableCode}
-          onChange={(e) => onTableCodeChange(e.target.value.toUpperCase())}
-          placeholder="e.g. T-DEMO"
-          required
-          style={{
-            width: "100%",
-            padding: "12px 14px",
-            borderRadius: radius.md,
-            border: `1px solid ${colors.slate200}`,
-            marginBottom: 16,
-            fontSize: 16,
-            boxSizing: "border-box"
-          }}
-        />
-
-        {lines.length === 0 ? (
-          <p style={{ color: colors.slate500 }}>Your cart is empty. Add items from the Menu tab.</p>
-        ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px" }}>
-            {lines.map((line) => (
-              <li
-                key={line.menuItemId}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "12px 0",
-                  borderBottom: `1px solid ${colors.slate100}`
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{line.name}</div>
-                  <div style={{ fontSize: 12, color: colors.slate500 }}>₹{line.price} each</div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <button
-                    type="button"
-                    onClick={() => setQty(line.menuItemId, line.qty - 1)}
+        <div style={{ padding: "16px 16px 120px" }}>
+          {lines.length === 0 ? (
+            <div style={{ paddingTop: 24, color: colors.slate500, textAlign: "center" }}>Your cart is empty.</div>
+          ) : (
+            <>
+              {lines.map((line) => (
+                <div
+                  key={line.menuItemId}
+                  style={{
+                    background: colors.white,
+                    borderRadius: radius.lg,
+                    padding: 14,
+                    marginBottom: 10,
+                    display: "flex",
+                    gap: 12,
+                    boxShadow: shadowXs
+                  }}
+                >
+                  <div
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      border: `1px solid ${colors.slate200}`,
-                      background: colors.white,
-                      cursor: "pointer"
+                      width: 64,
+                      height: 64,
+                      borderRadius: radius.md,
+                      flexShrink: 0,
+                      background: `linear-gradient(135deg, ${colors.teal50}, ${colors.teal100})`,
+                      overflow: "hidden",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 26
                     }}
                   >
-                    −
-                  </button>
-                  <span style={{ minWidth: 24, textAlign: "center", fontWeight: 600 }}>{line.qty}</span>
-                  <button
-                    type="button"
-                    onClick={() => setQty(line.menuItemId, line.qty + 1)}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      border: `1px solid ${colors.slate200}`,
-                      background: colors.white,
-                      cursor: "pointer"
-                    }}
-                  >
-                    +
-                  </button>
+                    {menuImageSrc(line.imageUrl) ? (
+                      <img src={menuImageSrc(line.imageUrl)!} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      "🍽️"
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2, color: colors.slate900 }}>{line.name}</div>
+                    <div style={{ fontSize: 12, color: colors.slate400, marginBottom: 8 }}>Table {tableCode}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: colors.teal600 }}>₹{(line.price * line.qty).toFixed(0)}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <button
+                          type="button"
+                          onClick={() => setQty(line.menuItemId, line.qty - 1)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: radius.sm,
+                            border: `1.5px solid ${colors.slate200}`,
+                            background: colors.white,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: colors.slate600
+                          }}
+                        >
+                          −
+                        </button>
+                        <span style={{ fontSize: 14, fontWeight: 800, minWidth: 16, textAlign: "center" }}>{line.qty}</span>
+                        <button
+                          type="button"
+                          onClick={() => setQty(line.menuItemId, line.qty + 1)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: radius.sm,
+                            border: `1.5px solid ${colors.slate200}`,
+                            background: colors.white,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: colors.slate600
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {error && (
-          <p style={{ color: "#b91c1c", fontSize: 14, marginBottom: 12 }}>{error}</p>
-        )}
+              ))}
+            </>
+          )}
+        </div>
 
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 16,
-            fontSize: 16,
-            fontWeight: 700
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            maxWidth: 480,
+            margin: "0 auto",
+            background: colors.white,
+            borderRadius: `${radius.lg}px ${radius.lg}px 0 0`,
+            padding: "18px 16px 24px",
+            boxShadow: "0 -4px 20px rgba(0,0,0,0.06)",
+            borderTop: `1px solid ${colors.slate100}`
           }}
         >
-          <span>Total</span>
-          <span style={{ color: colors.teal600 }}>₹{subtotal.toFixed(0)}</span>
-        </div>
+          {error && (
+            <div style={{ color: "#b91c1c", fontSize: 13, marginBottom: 10, background: "#fef2f2", padding: "10px 12px", borderRadius: radius.md }}>
+              {error}
+            </div>
+          )}
 
-        <button
-          type="submit"
-          disabled={submitting || lines.length === 0}
-          style={{
-            width: "100%",
-            padding: "14px",
-            fontSize: 16,
-            fontWeight: 600,
-            border: "none",
-            borderRadius: radius.md,
-            background: lines.length === 0 ? colors.slate200 : colors.teal600,
-            color: colors.white,
-            cursor: lines.length === 0 ? "not-allowed" : "pointer"
-          }}
-        >
-          {submitting ? "Placing…" : "Place order"}
-        </button>
+          <button
+            type="button"
+            onClick={onAddMore}
+            style={{
+              width: "100%",
+              border: `1.5px dashed ${colors.teal500}`,
+              borderRadius: radius.lg,
+              padding: 14,
+              background: `linear-gradient(135deg, ${colors.teal50}, #f5f3ff)`,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              cursor: "pointer",
+              marginBottom: 14
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: radius.md,
+                background: colors.white,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 22,
+                color: colors.teal600,
+                boxShadow: shadowXs,
+                flexShrink: 0
+              }}
+            >
+              +
+            </div>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: colors.teal700 }}>Add More Items</div>
+              <div style={{ fontSize: 12, color: colors.slate500, marginTop: 2 }}>Browse menu for extras & drinks</div>
+            </div>
+          </button>
+
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 14 }}>
+            <span style={{ color: colors.slate500 }}>Subtotal</span>
+            <span style={{ fontWeight: 700 }}>₹{subtotal.toFixed(0)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, fontSize: 18, fontWeight: 800 }}>
+            <span style={{ color: colors.slate900 }}>Total</span>
+            <span style={{ color: colors.teal600 }}>₹{subtotal.toFixed(0)}</span>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || lines.length === 0}
+            style={{
+              width: "100%",
+              padding: "18px",
+              fontSize: 16,
+              fontWeight: 800,
+              border: "none",
+              borderRadius: radius.lg,
+              background: lines.length === 0 ? colors.slate200 : colors.teal600,
+              color: colors.white,
+              cursor: submitting || lines.length === 0 ? "not-allowed" : "pointer"
+            }}
+          >
+            {submitting ? "Placing…" : "Place Order"}
+          </button>
+        </div>
       </form>
-    </section>
+    </div>
   );
 }

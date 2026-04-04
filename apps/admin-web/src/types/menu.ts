@@ -6,5 +6,9 @@ export type MenuItem = {
   description: string | null;
   imageUrl: string | null;
   price: number;
+  prepTime: string;
+  calories: string | null;
+  dietaryTags: string[];
+  customizations: string[];
   isAvailable: boolean;
 };

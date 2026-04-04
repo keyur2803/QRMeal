@@ -10,6 +10,7 @@ import { menuRouter } from "./menu.routes.js";
 import { ordersRouter } from "./order.routes.js";
 import { kitchenRouter } from "./kitchen.routes.js";
 import { paymentsRouter } from "./payment.routes.js";
+import { tablesRouter } from "./tables.routes.js";
 
 export function registerRoutes(app: Express): void {
   app.use("/auth", authRouter);
@@ -18,4 +19,5 @@ export function registerRoutes(app: Express): void {
   app.use("/orders", ordersRouter);
   app.use("/kitchen", kitchenRouter);
   app.use("/payments", paymentsRouter);
+  app.use("/tables", tablesRouter);
 }

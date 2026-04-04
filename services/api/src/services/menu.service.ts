@@ -11,6 +11,10 @@ function toDto(i: {
   description: string | null;
   imageUrl: string | null;
   price: unknown;
+  prepTime: string;
+  calories: string | null;
+  dietaryTags: string[];
+  customizations: string[];
   isAvailable: boolean;
   category: { name: string };
 }): MenuItemDto {
@@ -21,6 +25,10 @@ function toDto(i: {
     description: i.description,
     imageUrl: i.imageUrl,
     price: Number(i.price),
+    prepTime: i.prepTime,
+    calories: i.calories,
+    dietaryTags: i.dietaryTags,
+    customizations: i.customizations,
     isAvailable: i.isAvailable
   };
 }
@@ -46,9 +54,23 @@ export async function addItem(input: {
   price: number;
   description?: string | null;
   imageUrl?: string | null;
+  prepTime: string;
+  calories?: string | null;
+  dietaryTags?: string[];
+  customizations?: string[];
 }): Promise<MenuItemDto> {
   const cat = await menuRepo.upsertCategory(input.category?.trim() || "General");
-  const item = await menuRepo.createItem(cat.id, input.name, input.price, input.description, input.imageUrl);
+  const item = await menuRepo.createItem(
+    cat.id,
+    input.name,
+    input.price,
+    input.description,
+    input.imageUrl,
+    input.prepTime,
+    input.calories,
+    input.dietaryTags,
+    input.customizations
+  );
   return toDto(item);
 }
 
@@ -61,6 +83,10 @@ export async function patchItem(
     imageUrl?: string | null;
     isAvailable?: boolean;
     category?: string;
+    prepTime?: string;
+    calories?: string | null;
+    dietaryTags?: string[];
+    customizations?: string[];
   }
 ): Promise<MenuItemDto | null> {
   let categoryId: string | undefined;
@@ -74,7 +100,11 @@ export async function patchItem(
     description: patch.description,
     imageUrl: patch.imageUrl,
     isAvailable: patch.isAvailable,
-    categoryId
+    categoryId,
+    prepTime: patch.prepTime,
+    calories: patch.calories,
+    dietaryTags: patch.dietaryTags,
+    customizations: patch.customizations
   });
   return row ? toDto(row) : null;
 }

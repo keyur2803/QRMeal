@@ -1,6 +1,5 @@
 /**
  * Kitchen API client.
- * Fetches board data and updates order status.
  */
 
 import { API_BASE } from "../config/env";
@@ -12,12 +11,14 @@ export async function fetchBoard(): Promise<KitchenBoard> {
   return res.json();
 }
 
-export async function updateOrderStatus(orderId: string, status: KitchenStatus) {
+export async function updateOrderStatus(
+  orderId: string,
+  status: KitchenStatus | "served"
+): Promise<void> {
   const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status, changedBy: "kitchen" })
+    body: JSON.stringify({ status, changedBy: "kitchen" }),
   });
   if (!res.ok) throw new Error("Failed to update status");
-  return res.json();
 }

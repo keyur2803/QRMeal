@@ -6,5 +6,9 @@ export type MenuItem = {
   /** API path e.g. /uploads/menu-items/uuid.jpg */
   imageUrl: string | null;
   price: number;
+  prepTime: string;
+  calories: string | null;
+  dietaryTags: string[];
+  customizations: string[];
   isAvailable: boolean;
 };

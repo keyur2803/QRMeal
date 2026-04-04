@@ -5,17 +5,17 @@ export type KitchenStatus = "pending" | "preparing" | "ready";
 export type OrderItem = {
   name: string;
   qty: number;
-  price: number;
+  mod?: string;
 };
 
 export type KitchenOrder = {
   id: string;
   orderCode: string;
   table: string;
-  customerName: string;
-  items: OrderItem[];
   status: KitchenStatus;
   createdAt: string;
+  items: OrderItem[];
+  note?: string;
 };
 
 export type KitchenBoard = {

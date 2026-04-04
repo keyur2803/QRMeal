@@ -29,6 +29,10 @@ export type MenuItemDto = {
   /** Public URL path served by the API, e.g. /uploads/menu-items/uuid.jpg */
   imageUrl: string | null;
   price: number;
+  prepTime: string;
+  calories: string | null;
+  dietaryTags: string[];
+  customizations: string[];
   isAvailable: boolean;
 };
 

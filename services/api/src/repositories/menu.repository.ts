@@ -36,13 +36,21 @@ export function createItem(
   name: string,
   price: number,
   description?: string | null,
-  imageUrl?: string | null
+  imageUrl?: string | null,
+  prepTime?: string,
+  calories?: string | null,
+  dietaryTags?: string[],
+  customizations?: string[]
 ) {
   return prisma.menuItem.create({
     data: {
       categoryId,
       name,
       price,
+      prepTime: prepTime ?? "",
+      calories: calories ?? null,
+      dietaryTags: dietaryTags ?? [],
+      customizations: customizations ?? [],
       description: description?.trim() || null,
       imageUrl: imageUrl ?? null
     },
@@ -54,6 +62,10 @@ export function findById(id: string) {
   return prisma.menuItem.findUnique({ where: { id }, include: { category: true } });
 }
 
+export function deleteById(id: string) {
+  return prisma.menuItem.delete({ where: { id }, include: { category: true } });
+}
+
 export async function updateItem(
   id: string,
   data: {
@@ -63,6 +75,10 @@ export async function updateItem(
     imageUrl?: string | null;
     isAvailable?: boolean;
     categoryId?: string;
+    prepTime?: string;
+    calories?: string | null;
+    dietaryTags?: string[];
+    customizations?: string[];
   }
 ) {
   const payload: {
@@ -72,6 +88,10 @@ export async function updateItem(
     imageUrl?: string | null;
     isAvailable?: boolean;
     categoryId?: string;
+    prepTime?: string;
+    calories?: string | null;
+    dietaryTags?: string[];
+    customizations?: string[];
   } = {};
   if (data.name !== undefined) payload.name = data.name;
   if (data.price !== undefined) payload.price = data.price;
@@ -79,6 +99,10 @@ export async function updateItem(
   if (data.imageUrl !== undefined) payload.imageUrl = data.imageUrl;
   if (data.isAvailable !== undefined) payload.isAvailable = data.isAvailable;
   if (data.categoryId !== undefined) payload.categoryId = data.categoryId;
+  if (data.prepTime !== undefined) payload.prepTime = data.prepTime;
+  if (data.calories !== undefined) payload.calories = data.calories;
+  if (data.dietaryTags !== undefined) payload.dietaryTags = data.dietaryTags;
+  if (data.customizations !== undefined) payload.customizations = data.customizations;
 
   try {
     if (Object.keys(payload).length === 0) {

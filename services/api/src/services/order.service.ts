@@ -63,3 +63,16 @@ export async function updateStatus(orderId: string, status: ApiStatus, changedBy
 
   return serializeOrder(updated);
 }
+
+export async function addItemsToOrder(orderId: string, items: OrderItemDto[]): Promise<OrderDto> {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("items are required");
+  }
+
+  const updated = await orderRepo.appendItems({
+    orderId,
+    items: items.map((i) => ({ itemName: i.name, qty: i.qty || 1, unitPrice: i.price || 0 }))
+  });
+  if (!updated) throw new Error("Order not found");
+  return serializeOrder(updated);
+}

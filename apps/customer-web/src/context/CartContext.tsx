@@ -8,6 +8,7 @@ import type { MenuItem } from "../types/menu";
 export type CartLine = {
   menuItemId: string;
   name: string;
+  imageUrl: string | null;
   price: number;
   qty: number;
 };
@@ -32,7 +33,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLines((prev) => {
       const i = prev.findIndex((l) => l.menuItemId === item.id);
       if (i === -1) {
-        return [...prev, { menuItemId: item.id, name: item.name, price: item.price, qty: 1 }];
+        return [
+          ...prev,
+          { menuItemId: item.id, name: item.name, imageUrl: item.imageUrl, price: item.price, qty: 1 }
+        ];
       }
       const next = [...prev];
       next[i] = { ...next[i], qty: next[i].qty + 1 };

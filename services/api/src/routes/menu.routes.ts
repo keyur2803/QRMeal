@@ -45,12 +45,7 @@ menuRouter.get("/admin", requireAuth("owner"), async (_req, res) => {
 
 /** Multipart create: fields category, name, price, description + optional file field image */
 menuRouter.post("/upload", requireAuth("owner"), uploadSingle, async (req, res) => {
-  const { category, name, price, description } = req.body as {
-    category?: string;
-    name?: string;
-    price?: string;
-    description?: string;
-  };
+  const { category, name, price, description, prepTime, calories, dietaryTags, customizations } = req.body as any;
 
   if (!name?.trim() || price === undefined || price === "") {
     return res.status(400).json({ message: "name and price are required" });
@@ -60,6 +55,14 @@ menuRouter.post("/upload", requireAuth("owner"), uploadSingle, async (req, res) 
   if (Number.isNaN(p)) {
     return res.status(400).json({ message: "invalid price" });
   }
+  
+  if (!prepTime?.trim()) {
+    return res.status(400).json({ message: "prepTime is required" });
+  }
+
+  let dt: string[] = [], cu: string[] = [];
+  try { if (dietaryTags) dt = typeof dietaryTags === "string" ? JSON.parse(dietaryTags) : dietaryTags; } catch {}
+  try { if (customizations) cu = typeof customizations === "string" ? JSON.parse(customizations) : customizations; } catch {}
 
   const file = req.file;
   const imageUrl = file ? await storeMenuItemImage(file) : null;
@@ -69,21 +72,23 @@ menuRouter.post("/upload", requireAuth("owner"), uploadSingle, async (req, res) 
     name: name.trim(),
     price: p,
     description: description?.trim() || null,
-    imageUrl
+    imageUrl,
+    prepTime: prepTime.trim(),
+    calories: calories?.trim() || null,
+    dietaryTags: dt,
+    customizations: cu
   });
   return res.status(201).json(item);
 });
 
 menuRouter.post("/", requireAuth("owner"), async (req, res) => {
-  const { category, name, price, description } = req.body as {
-    category?: string;
-    name?: string;
-    price?: number;
-    description?: string | null;
-  };
+  const { category, name, price, description, prepTime, calories, dietaryTags, customizations } = req.body as any;
 
   if (!name || price === undefined || Number.isNaN(Number(price))) {
     return res.status(400).json({ message: "name and price are required" });
+  }
+  if (!prepTime?.trim()) {
+    return res.status(400).json({ message: "prepTime is required" });
   }
 
   const item = await menuService.addItem({
@@ -91,7 +96,11 @@ menuRouter.post("/", requireAuth("owner"), async (req, res) => {
     name,
     price: Number(price),
     description: description ?? null,
-    imageUrl: null
+    imageUrl: null,
+    prepTime: prepTime.trim(),
+    calories: calories ?? null,
+    dietaryTags: Array.isArray(dietaryTags) ? dietaryTags : [],
+    customizations: Array.isArray(customizations) ? customizations : []
   });
   return res.status(201).json(item);
 });
@@ -121,20 +130,22 @@ menuRouter.post("/:id/image", requireAuth("owner"), uploadSingle, async (req, re
 });
 
 menuRouter.patch("/:id", requireAuth("owner"), async (req, res) => {
-  const { name, price, description, isAvailable, category } = req.body as {
-    name?: string;
-    price?: number;
-    description?: string | null;
-    isAvailable?: boolean;
-    category?: string;
-  };
+  const { name, price, description, isAvailable, category, prepTime, calories, dietaryTags, customizations } = req.body as any;
+
+  let dt, cu;
+  try { if (dietaryTags !== undefined) dt = typeof dietaryTags === "string" ? JSON.parse(dietaryTags) : dietaryTags; } catch {}
+  try { if (customizations !== undefined) cu = typeof customizations === "string" ? JSON.parse(customizations) : customizations; } catch {}
 
   const updated = await menuService.patchItem(routeParamId(req.params.id), {
     name,
     price: price !== undefined ? Number(price) : undefined,
     description,
-    isAvailable,
-    category
+    isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : undefined,
+    category,
+    prepTime,
+    calories,
+    dietaryTags: dt,
+    customizations: cu
   });
 
   if (!updated) {

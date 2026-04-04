@@ -76,3 +76,30 @@ export async function updateStatus(
     return tx.order.findUniqueOrThrow({ where: { id: orderId }, include: INCLUDE });
   });
 }
+
+type AppendItemsInput = {
+  orderId: string;
+  items: { itemName: string; qty: number; unitPrice: number }[];
+};
+
+export async function appendItems(input: AppendItemsInput): Promise<OrderWithRelations | null> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const current = await tx.order.findUnique({ where: { id: input.orderId }, include: INCLUDE });
+    if (!current) return null;
+    if (current.status === OrderStatus.SERVED || current.status === OrderStatus.CANCELLED) {
+      throw new Error("Order is not active");
+    }
+
+    const extra = input.items.reduce((s, i) => s + (i.unitPrice || 0) * (i.qty || 1), 0);
+
+    await tx.order.update({
+      where: { id: input.orderId },
+      data: {
+        totalAmount: { increment: extra },
+        items: { create: input.items }
+      }
+    });
+
+    return tx.order.findUniqueOrThrow({ where: { id: input.orderId }, include: INCLUDE });
+  });
+}

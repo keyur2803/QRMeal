@@ -3,6 +3,7 @@
  *
  * GET   /orders          — list all orders
  * POST  /orders          — place a new order
+ * POST  /orders/:id/items — add items to an active order
  * PATCH /orders/:id/status — update order status (kitchen drag-and-drop)
  */
 
@@ -50,6 +51,21 @@ ordersRouter.patch("/:id/status", async (req, res) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Could not update status";
     const code = msg === "Order not found" ? 404 : msg === "Invalid status" ? 400 : 500;
+    return res.status(code).json({ message: msg });
+  }
+});
+
+ordersRouter.post("/:id/items", async (req, res) => {
+  const { items } = req.body as { items?: OrderItemDto[] };
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: "items are required" });
+  }
+  try {
+    const order = await orderService.addItemsToOrder(req.params.id, items);
+    return res.json(order);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Could not add items";
+    const code = msg === "Order not found" ? 404 : msg === "Order is not active" ? 400 : 500;
     return res.status(code).json({ message: msg });
   }
 });

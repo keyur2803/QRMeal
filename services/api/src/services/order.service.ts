@@ -34,7 +34,8 @@ export async function listOrders(): Promise<OrderDto[]> {
 export async function createOrder(
   tableCode: string,
   customerName: string | undefined,
-  items: OrderItemDto[]
+  items: OrderItemDto[],
+  placedBy?: string
 ): Promise<OrderDto> {
   const table = await tableRepo.findActiveByCode(tableCode);
   if (!table) throw new Error(`Unknown or inactive table: ${tableCode}`);
@@ -45,6 +46,7 @@ export async function createOrder(
     orderCode: await uniqueOrderCode(),
     tableId: table.id,
     customerName: customerName || "Guest",
+    placedBy: placedBy || "CUSTOMER",
     totalAmount: total,
     items: items.map((i) => ({ itemName: i.name, qty: i.qty || 1, unitPrice: i.price || 0 }))
   });

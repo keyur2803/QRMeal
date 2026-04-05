@@ -40,6 +40,7 @@ export function serializeOrder(o: OrderWithRelations): OrderDto {
     orderCode: o.orderCode,
     table: o.table.code,
     customerName: o.customerName ?? "Guest",
+    placedBy: o.placedBy,
     items,
     status: toLowerStatus(o.status),
     total: Number(o.totalAmount),

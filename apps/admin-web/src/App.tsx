@@ -8,16 +8,20 @@ import { Provider, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { store } from "./store";
-import type { AppDispatch } from "./store";
+import type { AppDispatch, RootState } from "./store";
 import { checkAuth } from "./store/slices/authSlice";
+import { useSelector } from "react-redux";
 
 import AdminLogin from "./pages/AdminLogin";
 import Dashboard from "./pages/Dashboard";
 import MenuManagement from "./pages/MenuManagement";
 import TablesQr from "./pages/TablesQr";
+import WaiterApp from "./pages/WaiterApp";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppRoutes() {
+  const { user } = useSelector((state: RootState) => state.auth);
+
   return (
     <Routes>
       {/* Public Routes */}
@@ -25,16 +29,20 @@ function AppRoutes() {
 
       {/* Protected Layout Routes */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/menu" element={<MenuManagement />} />
-        <Route path="/tables" element={<TablesQr />} />
+        {/* Waiter specific route */}
+        <Route path="/waiter" element={user?.role === "waiter" ? <WaiterApp /> : <Navigate to="/dashboard" replace />} />
+        
+        {/* Admin only routes */}
+        <Route path="/dashboard" element={user?.role === "waiter" ? <Navigate to="/waiter" replace /> : <Dashboard />} />
+        <Route path="/menu" element={user?.role === "waiter" ? <Navigate to="/waiter" replace /> : <MenuManagement />} />
+        <Route path="/tables" element={user?.role === "waiter" ? <Navigate to="/waiter" replace /> : <TablesQr />} />
         
         {/* Placeholder for future features */}
-        <Route path="/analytics" element={<Placeholder title="Analytics" icon="📊" />} />
-        <Route path="/settings" element={<Placeholder title="Settings" icon="⚙️" />} />
+        <Route path="/analytics" element={user?.role === "waiter" ? <Navigate to="/waiter" replace /> : <Placeholder title="Analytics" icon="📊" />} />
+        <Route path="/settings" element={user?.role === "waiter" ? <Navigate to="/waiter" replace /> : <Placeholder title="Settings" icon="⚙️" />} />
         
         {/* Default redirect for authenticated users */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to={user?.role === "waiter" ? "/waiter" : "/dashboard"} replace />} />
       </Route>
 
       {/* Catch-all redirect to login */}

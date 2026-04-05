@@ -19,10 +19,11 @@ ordersRouter.get("/", async (_req, res) => {
 });
 
 ordersRouter.post("/", async (req, res) => {
-  const { table, customerName, items } = req.body as {
+  const { table, customerName, items, placedBy } = req.body as {
     table?: string;
     customerName?: string;
     items?: OrderItemDto[];
+    placedBy?: string;
   };
 
   if (!table || !Array.isArray(items) || items.length === 0) {
@@ -30,7 +31,7 @@ ordersRouter.post("/", async (req, res) => {
   }
 
   try {
-    const order = await orderService.createOrder(table, customerName, items);
+    const order = await orderService.createOrder(table, customerName, items, placedBy);
     return res.status(201).json(order);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Could not create order";

@@ -6,7 +6,7 @@
 
 // ── Enums (lowercase for JSON responses) ──────────────────────────
 
-export type UserRole = "owner" | "kitchen" | "customer";
+export type UserRole = "owner" | "kitchen" | "customer" | "waiter";
 export type OrderStatus = "pending" | "preparing" | "ready" | "served" | "cancelled";
 
 // ── User ───────────────────────────────────────────────────────────
@@ -55,6 +55,7 @@ export type OrderDto = {
   orderCode: string;
   table: string;
   customerName: string;
+  placedBy: string;
   items: OrderItemDto[];
   status: OrderStatus;
   total: number;

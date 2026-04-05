@@ -40,12 +40,17 @@ function BrandLoader() {
 }
 
 export default function ProtectedRoute() {
-  const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading, user } = useSelector((state: RootState) => state.auth);
 
   if (loading) return <BrandLoader />;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user?.role === "waiter") {
+    // Render WaiterApp completely full screen without topbar/sidebar Layout wrappers
+    return <Outlet />;
   }
 
   return (

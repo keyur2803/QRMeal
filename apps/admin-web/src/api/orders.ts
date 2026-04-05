@@ -33,5 +33,26 @@ export async function fetchOrderStats(): Promise<OrderStats> {
 }
 
 export async function fetchRecentOrders(): Promise<RecentOrder[]> {
-  return apiClient<RecentOrder[]>("/orders/recent");
+  return apiClient<RecentOrder[]>("/orders");
+}
+
+export type CreateOrderPayload = {
+  table: string;
+  customerName?: string;
+  placedBy?: string;
+  items: { name: string; qty: number; price: number }[];
+};
+
+export async function createOrder(payload: CreateOrderPayload) {
+  return apiClient("/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateOrderStatus(orderId: string, status: string, changedBy?: string) {
+  return apiClient(`/orders/${orderId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, changedBy }),
+  });
 }

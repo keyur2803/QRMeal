@@ -38,7 +38,7 @@ menuRouter.get("/", async (_req, res) => {
   res.json(items);
 });
 
-menuRouter.get("/admin", requireAuth("owner"), async (_req, res) => {
+menuRouter.get("/admin", requireAuth("owner", "waiter"), async (_req, res) => {
   const items = await menuService.listAll();
   res.json(items);
 });

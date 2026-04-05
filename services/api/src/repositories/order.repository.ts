@@ -35,6 +35,7 @@ type CreateOrderInput = {
   orderCode: string;
   tableId: string;
   customerName: string;
+  placedBy?: string;
   totalAmount: number;
   items: { itemName: string; qty: number; unitPrice: number }[];
 };
@@ -45,6 +46,7 @@ export function createOrder(input: CreateOrderInput): Promise<OrderWithRelations
       orderCode: input.orderCode,
       tableId: input.tableId,
       customerName: input.customerName,
+      placedBy: input.placedBy || "CUSTOMER",
       status: OrderStatus.PENDING,
       totalAmount: input.totalAmount,
       paymentMode: "COUNTER",

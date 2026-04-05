@@ -8,35 +8,35 @@ import { apiClient } from "../lib/api-client";
 type SendOtpResponse = { ok: boolean; message: string; demoOtp?: string };
 
 type VerifyOtpResponse =
-  | { needsProfile: false; token: string; user: { id: string; name: string; phone: string | null; email: string | null; role: string } }
-  | { needsProfile: true; pendingToken: string; phone: string };
+  | { needsProfile: false; token: string; user: { id: string; name: string; email: string | null; phone: string | null; role: string } }
+  | { needsProfile: true; pendingToken: string; email: string };
 
 type CompleteProfileResponse = {
   token: string;
-  user: { id: string; name: string; phone: string | null; email: string | null; role: string };
+  user: { id: string; name: string; email: string | null; phone: string | null; role: string };
 };
 
-export function sendOtp(phone: string) {
+export function sendOtp(email: string) {
   return apiClient<SendOtpResponse>("/auth/customer/send-otp", {
     method: "POST",
-    body: JSON.stringify({ phone })
+    body: JSON.stringify({ email })
   });
 }
 
-export function verifyOtp(phone: string, otp: string) {
+export function verifyOtp(email: string, otp: string) {
   return apiClient<VerifyOtpResponse>("/auth/customer/verify-otp", {
     method: "POST",
-    body: JSON.stringify({ phone, otp })
+    body: JSON.stringify({ email, otp })
   });
 }
 
-export function completeProfile(pendingToken: string, name: string, email: string | undefined) {
+export function completeProfile(pendingToken: string, name: string, phone: string | undefined) {
   return apiClient<CompleteProfileResponse>("/auth/customer/complete-profile", {
     method: "POST",
     body: JSON.stringify({
       pendingToken,
       name,
-      email: email || undefined
+      phone: phone || undefined
     })
   });
 }

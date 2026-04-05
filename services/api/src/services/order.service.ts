@@ -4,6 +4,8 @@
 
 import * as orderRepo from "../repositories/order.repository.js";
 import * as tableRepo from "../repositories/table.repository.js";
+import * as userRepo from "../repositories/user.repository.js";
+import { sendInvoiceEmail } from "./email.service.js";
 import type { OrderStatus } from "../db/enums.js";
 import { serializeOrder, toUpperStatus } from "../domain/serializers.js";
 import { ALLOWED_ORDER_STATUSES } from "../config/constants.js";
@@ -50,6 +52,19 @@ export async function createOrder(
     totalAmount: total,
     items: items.map((i) => ({ itemName: i.name, qty: i.qty || 1, unitPrice: i.price || 0 }))
   });
+
+  // Try to send invoice email if placedBy is a registered user
+  if (placedBy && placedBy !== "CUSTOMER") {
+    userRepo.findById(placedBy).then((user) => {
+      if (user?.email) {
+        sendInvoiceEmail(user.email, {
+          orderCode: row.orderCode,
+          total,
+          items: items.map(i => ({ name: i.name, qty: i.qty || 1, price: i.price || 0 }))
+        }).catch(err => console.error("Failed to send invoice email", err));
+      }
+    });
+  }
 
   return serializeOrder(row);
 }

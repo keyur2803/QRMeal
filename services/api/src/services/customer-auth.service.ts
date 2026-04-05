@@ -1,12 +1,8 @@
-/**
- * Customer OTP-based authentication.
- * In production, replace STATIC_OTP check with an SMS gateway call.
- */
-
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
-import { STATIC_OTP, TOKEN_EXPIRY } from "../config/constants.js";
+import { TOKEN_EXPIRY } from "../config/constants.js";
 import * as userRepo from "../repositories/user.repository.js";
+import * as otpRepo from "../repositories/otp.repository.js";
 import type { UserProfile } from "../domain/types.js";
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -17,84 +13,84 @@ export function normalizePhone(raw: string): string | null {
   return digits.length >= 10 && digits.length <= 15 ? digits : null;
 }
 
-function signAccessToken(user: { id: string; name: string; phone: string | null }) {
+function signAccessToken(user: { id: string; name: string; email: string | null }) {
   return jwt.sign(
-    { sub: user.id, role: "customer", name: user.name, phone: user.phone },
+    { sub: user.id, role: "customer", name: user.name, email: user.email },
     env.jwtSecret,
     { expiresIn: TOKEN_EXPIRY.customer }
   );
 }
 
-function buildProfile(u: { id: string; name: string; phone: string | null; email: string | null }): UserProfile {
-  return { id: u.id, name: u.name, phone: u.phone, email: u.email, role: "customer" };
+function buildProfile(u: { id: string; name: string; email: string | null; phone: string | null }): UserProfile {
+  return { id: u.id, name: u.name, email: u.email, phone: u.phone, role: "customer" };
 }
 
 // ── Service methods ───────────────────────────────────────────────
 
-export function verifyOtpCode(otp: string): boolean {
-  return otp === STATIC_OTP;
-  //TODO: In production, replace STATIC_OTP check with an SMS gateway call
-  //TODO: Add OTP verification logic
+export async function verifyOtpCode(email: string, otp: string): Promise<boolean> {
+  const latest = await otpRepo.findLatestOtp(email);
+  if (!latest || latest.code !== otp) return false;
+
+  const isExpired = new Date() > latest.expiresAt;
+  if (isExpired) {
+    await otpRepo.deleteOtp(latest.id);
+    return false;
+  }
+
+  // Valid! Delete so it can't be reused immediately
+  await otpRepo.deleteOtp(latest.id);
+  return true;
 }
 
-/**
- * After OTP verified: return session if user exists,
- * or a short-lived pending token so the client can collect name/email.
- */
-export async function authenticateByPhone(phone: string) {
-  const user = await userRepo.findCustomerByPhone(phone);
+export async function authenticateByEmail(email: string) {
+  const user = await userRepo.findCustomerByEmail(email);
 
   if (user) {
     return {
       needsProfile: false as const,
-      token: signAccessToken({ id: user.id, name: user.name, phone: user.phone }),
+      token: signAccessToken({ id: user.id, name: user.name, email: user.email }),
       user: buildProfile(user)
     };
   }
 
   const pendingToken = jwt.sign(
-    { purpose: "customer_pending", phone },
+    { purpose: "customer_pending", email },
     env.jwtSecret,
     { expiresIn: TOKEN_EXPIRY.pendingProfile }
   );
 
-  return { needsProfile: true as const, pendingToken, phone };
+  return { needsProfile: true as const, pendingToken, email };
 }
 
 /** Verify the pending token, create user, return access token. */
-export async function completeProfile(pendingToken: string, name: string, email: string | undefined) {
-  let payload: { purpose?: string; phone?: string };
+export async function completeProfile(pendingToken: string, name: string, phone: string | undefined) {
+  let payload: { purpose?: string; email?: string };
   try {
     payload = jwt.verify(pendingToken, env.jwtSecret) as typeof payload;
   } catch {
     throw new Error("Invalid or expired session. Start again.");
   }
 
-  if (payload.purpose !== "customer_pending" || !payload.phone) {
+  if (payload.purpose !== "customer_pending" || !payload.email) {
     throw new Error("Invalid session");
   }
 
-  const phone = payload.phone;
+  const email = payload.email;
 
-  // Race-condition guard: user may have been created between steps
-  const existing = await userRepo.findCustomerByPhone(phone);
+  // Race-condition guard
+  const existing = await userRepo.findCustomerByEmail(email);
   if (existing) {
     return {
-      token: signAccessToken({ id: existing.id, name: existing.name, phone: existing.phone }),
+      token: signAccessToken({ id: existing.id, name: existing.name, email: existing.email }),
       user: buildProfile(existing)
     };
   }
 
-  const emailTrim = email?.trim() || null;
-  if (emailTrim) {
-    const clash = await userRepo.findByEmailAny(emailTrim);
-    if (clash) throw new Error("Email already in use");
-  }
-
-  const user = await userRepo.createCustomer({ name: name.trim(), phone, email: emailTrim });
+  const phoneTrim = phone?.trim() || null;
+  const user = await userRepo.createCustomer({ name: name.trim(), email, phone: phoneTrim });
 
   return {
-    token: signAccessToken({ id: user.id, name: user.name, phone: user.phone }),
+    token: signAccessToken({ id: user.id, name: user.name, email: user.email }),
     user: buildProfile(user)
   };
 }

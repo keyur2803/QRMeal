@@ -7,48 +7,64 @@
  */
 
 import { Router } from "express";
-import { env } from "../config/env.js";
-import { STATIC_OTP } from "../config/constants.js";
 import * as customerAuthService from "../services/customer-auth.service.js";
+import { sendOtpEmail } from "../services/email.service.js";
+import * as otpRepo from "../repositories/otp.repository.js";
 
 export const customerAuthRouter = Router();
 
-customerAuthRouter.post("/send-otp", async (req, res) => {
-  const { phone: raw } = req.body as { phone?: string };
-  const phone = raw ? customerAuthService.normalizePhone(raw) : null;
+function generateOtp(length: number = 4): string {
+  let otp = "";
+  for (let i = 0; i < length; i++) {
+    otp += Math.floor(Math.random() * 10).toString();
+  }
+  return otp;
+}
 
-  if (!phone) {
-    return res.status(400).json({ message: "Enter a valid mobile number (10-15 digits)" });
+customerAuthRouter.post("/send-otp", async (req, res) => {
+  const { email } = req.body as { email?: string };
+
+  if (!email || !email.includes("@")) {
+    return res.status(400).json({ message: "Enter a valid email address" });
   }
 
-  return res.json({
-    ok: true,
-    message: "OTP sent (demo: use 1234)",
-    demoOtp: env.isProd ? undefined : STATIC_OTP
-  });
+  const otp = generateOtp(4);
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+  try {
+    await otpRepo.createOtp(email, otp, expiresAt);
+    await sendOtpEmail(email, otp);
+    return res.json({
+      ok: true,
+      message: "OTP sent to your email"
+    });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Failed to send email" });
+  }
 });
 
 customerAuthRouter.post("/verify-otp", async (req, res) => {
-  const { phone: raw, otp } = req.body as { phone?: string; otp?: string };
-  const phone = raw ? customerAuthService.normalizePhone(raw) : null;
+  const { email, otp } = req.body as { email?: string; otp?: string };
 
-  if (!phone || !otp) {
-    return res.status(400).json({ message: "phone and otp required" });
+  if (!email || !otp) {
+    return res.status(400).json({ message: "email and otp required" });
   }
 
-  if (!customerAuthService.verifyOtpCode(otp)) {
-    return res.status(401).json({ message: "Invalid OTP" });
+  const isValid = await customerAuthService.verifyOtpCode(email, otp);
+  if (!isValid) {
+    return res.status(401).json({ message: "Invalid or expired OTP" });
   }
 
-  const result = await customerAuthService.authenticateByPhone(phone);
+  const result = await customerAuthService.authenticateByEmail(email);
   return res.json(result);
 });
 
 customerAuthRouter.post("/complete-profile", async (req, res) => {
-  const { pendingToken, name, email } = req.body as {
+  const { pendingToken, name, phone } = req.body as {
     pendingToken?: string;
     name?: string;
-    email?: string;
+    phone?: string;
   };
 
   if (!pendingToken || !name?.trim()) {
@@ -56,11 +72,10 @@ customerAuthRouter.post("/complete-profile", async (req, res) => {
   }
 
   try {
-    const result = await customerAuthService.completeProfile(pendingToken, name, email);
+    const result = await customerAuthService.completeProfile(pendingToken, name, phone);
     return res.status(201).json(result);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Profile creation failed";
-    const status = msg.includes("Email already in use") ? 409 : 400;
-    return res.status(status).json({ message: msg });
+    return res.status(400).json({ message: msg });
   }
 });

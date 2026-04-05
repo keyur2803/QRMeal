@@ -22,7 +22,7 @@ export function findCustomerByEmail(email: string) {
   });
 }
 
-export function findByEmailAny(email: string) {
+export function findByEmail(email: string) {
   return prisma.user.findFirst({ where: { email } });
 }
 

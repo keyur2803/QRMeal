@@ -19,6 +19,8 @@ export default function KitchenLogin() {
         credentials: "include"
       });
       if (!res.ok) throw new Error("Login failed");
+      const data = await res.json();
+      localStorage.setItem("qrmeal_token", data.token);
       navigate("/board");
     } catch (err) {
       alert("Login failed. Check credentials.");

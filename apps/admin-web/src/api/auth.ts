@@ -6,6 +6,7 @@ import { apiClient } from "../lib/api-client";
 
 type LoginResponse = {
   user: { id: string; name: string; role: string };
+  token: string;
 };
 
 export async function loginStaff(email: string, password: string): Promise<LoginResponse> {

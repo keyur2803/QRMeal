@@ -234,7 +234,10 @@ export default function KitchenBoard() {
             onClick={() => {
               fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" })
                 .catch(() => {})
-                .finally(() => window.location.reload());
+                .finally(() => {
+                  localStorage.removeItem("qrmeal_token");
+                  window.location.reload();
+                });
             }}
             style={{ marginLeft: 16, background: "transparent", color: "#f97066", border: "1.5px solid #f97066", padding: "4px 12px", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13 }}
             title="Log out"

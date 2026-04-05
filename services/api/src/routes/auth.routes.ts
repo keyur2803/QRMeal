@@ -35,7 +35,7 @@ authRouter.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (align with token expiry)
     });
 
-    return res.json({ user });
+    return res.json({ user, token });
   } catch {
     return res.status(401).json({ message: "Invalid credentials" });
   }

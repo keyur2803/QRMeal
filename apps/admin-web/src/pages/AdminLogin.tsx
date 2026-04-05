@@ -22,6 +22,8 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       const data = await loginStaff(email, password);
+      // Save token for cross-origin Bearer usage
+      localStorage.setItem("qrmeal_token", data.token);
       // Update Redux state
       dispatch(setUser(data.user));
       // Redirect to dashboard

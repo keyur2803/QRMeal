@@ -11,13 +11,19 @@ export default function ProtectedRoute() {
     
     async function checkAuth() {
       try {
-        const res = await fetch(`${API_BASE}/auth/profile`, { credentials: "include" });
+        const token = localStorage.getItem("qrmeal_token");
+        const res = await fetch(`${API_BASE}/auth/profile`, { 
+          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          credentials: "include" 
+        });
         if (res.ok) {
           if (mounted) setIsAuthenticated(true);
         } else {
+          localStorage.removeItem("qrmeal_token");
           if (mounted) setIsAuthenticated(false);
         }
       } catch (err) {
+        localStorage.removeItem("qrmeal_token");
         if (mounted) setIsAuthenticated(false);
       } finally {
         if (mounted) setLoading(false);

@@ -12,10 +12,13 @@ export async function apiClient<T>(
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
   
+  const token = localStorage.getItem("qrmeal_token");
+  
   const defaultOptions: RequestInit = {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
     // Required for sending httpOnly cookies

@@ -8,7 +8,11 @@ import type { KitchenBoard, KitchenStatus } from "../types/order";
 
 export async function fetchBoard(): Promise<KitchenBoard> {
   try {
-    const res = await fetch(`${API_BASE}/kitchen/board`, { credentials: "include" });
+    const token = localStorage.getItem("qrmeal_token");
+    const res = await fetch(`${API_BASE}/kitchen/board`, { 
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      credentials: "include" 
+    });
     if (!res.ok) {
       if (res.status === 401) throw new Error("UNAUTHORIZED");
       const errorData = await res.json().catch(() => ({}));
@@ -27,9 +31,13 @@ export async function updateOrderStatus(
   status: KitchenStatus | "served"
 ): Promise<void> {
   try {
+    const token = localStorage.getItem("qrmeal_token");
     const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ status, changedBy: "kitchen" }),
       credentials: "include",
     });

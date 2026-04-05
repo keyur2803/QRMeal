@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRMEAL — Active Orders</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { background: var(--slate-100); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; font-family: 'Inter', sans-serif; }
+  .orders-screen { background: var(--slate-100); min-height: 100%; display: flex; flex-direction: column; }
+  
+  /* Header */
+  .orders-header { background: var(--white); padding: 50px 20px 16px; border-bottom: 1px solid var(--slate-200); position: sticky; top: 0; z-index: 10; }
+  .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .o-title { font-size: 20px; font-weight: 800; color: var(--slate-900); }
+  
+  /* Tabs */
+  .o-tabs { display: flex; background: var(--slate-100); padding: 4px; border-radius: 12px; }
+  .o-tab { flex: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 600; color: var(--slate-500); border-radius: 8px; border: none; background: transparent; cursor: pointer; }
+  .o-tab.active { background: var(--white); color: var(--slate-900); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+  
+  /* Orders List */
+  .orders-list { padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  
+  /* Order Card */
+  .waiter-card { background: var(--white); border-radius: 16px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); position: relative; overflow: hidden; }
+  .waiter-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .waiter-card.ready::before { background: var(--teal-500); }
+  .waiter-card.prep::before { background: var(--amber-500); }
+  
+  /* Card Top */
+  .wc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .wc-table { font-size: 22px; font-weight: 800; color: var(--slate-900); display: flex; align-items: center; gap: 8px; }
+  .wc-status { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .wc-status.ready { background: var(--teal-50); color: var(--teal-700); }
+  .wc-status.prep { background: var(--amber-50); color: var(--amber-700); }
+  
+  /* Source Tag */
+  .wc-source { font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; margin-bottom: 12px; }
+  .source-customer { background: var(--blue-50); color: var(--blue-700); }
+  .source-waiter { background: var(--purple-50); color: var(--purple-700); }
+  
+  /* Items list */
+  .wc-items { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--slate-200); }
+  .wc-item { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; color: var(--slate-700); }
+  .wc-qty { color: var(--slate-400); font-weight: 700; width: 24px; }
+  .wc-name { flex: 1; }
+  
+  /* Action Area */
+  .wc-action { display: flex; gap: 10px; }
+  .wc-btn { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; text-align: center; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .wc-btn-primary { background: var(--slate-900); color: var(--white); }
+  .wc-btn-secondary { background: var(--slate-100); color: var(--slate-700); }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="notch"></div>
+  <div class="status-bar"><span>9:41</span><span style="font-size:10px;">&#9679;&#9679;&#9679;</span></div>
+  <div class="screen-body">
+    <div class="orders-screen">
+      
+      <div class="orders-header">
+        <div class="header-flex">
+          <div class="o-title">Active Orders</div>
+          <div class="badge badge-teal" style="font-size:12px;">3 Pending</div>
+        </div>
+        <div class="o-tabs">
+          <button class="o-tab active">All Active</button>
+          <button class="o-tab">Ready (2)</button>
+          <button class="o-tab">Preparing (1)</button>
+        </div>
+      </div>
+      
+      <div class="orders-list">
+        
+        <!-- READY ORDER (Placed by Customer) -->
+        <div class="waiter-card ready">
+          <div class="wc-top">
+            <div class="wc-table">T-12</div>
+            <div class="wc-status ready">● Ready to Serve</div>
+          </div>
+          <div class="wc-source source-customer">📱 Self-Ordered (John D.)</div>
+          
+          <div class="wc-items">
+            <div class="wc-item">
+              <span class="wc-qty">1x</span>
+              <span class="wc-name">Margherita Pizza</span>
+            </div>
+            <div class="wc-item">
+              <span class="wc-qty">2x</span>
+              <span class="wc-name">Truffle Pasta</span>
+            </div>
+          </div>
+          
+          <div class="wc-action">
+            <button class="wc-btn wc-btn-primary">🍽️ Mark as Served</button>
+          </div>
+        </div>
+        
+        <!-- READY ORDER (Placed by Waiter) -->
+        <div class="waiter-card ready">
+          <div class="wc-top">
+            <div class="wc-table">T-04</div>
+            <div class="wc-status ready">● Ready to Serve</div>
+          </div>
+          <div class="wc-source source-waiter">👨‍🍳 Waiter App (You)</div>
+          
+          <div class="wc-items">
+            <div class="wc-item">
+              <span class="wc-qty">3x</span>
+              <span class="wc-name">Draft Beer</span>
+            </div>
+          </div>
+          
+          <div class="wc-action">
+            <button class="wc-btn wc-btn-primary">🍽️ Mark as Served</button>
+          </div>
+        </div>
+        
+        <!-- PREPARING ORDER -->
+        <div class="waiter-card prep">
+          <div class="wc-top">
+            <div class="wc-table">T-08</div>
+            <div class="wc-status prep">● Preparing</div>
+          </div>
+          <div class="wc-source source-waiter">👨‍🍳 Waiter App (Sarah)</div>
+          
+          <div class="wc-items">
+            <div class="wc-item" style="color:var(--slate-400)">
+              <span class="wc-qty">1x</span>
+              <span class="wc-name">Grilled Salmon</span>
+            </div>
+            <div class="wc-item" style="color:var(--slate-400)">
+              <span class="wc-qty">1x</span>
+              <span class="wc-name">Caesar Salad</span>
+            </div>
+          </div>
+          
+          <div class="wc-action">
+            <button class="wc-btn wc-btn-secondary" disabled>Kitchen is cooking...</button>
+          </div>
+        </div>
+
+      </div>
+      
+    </div>
+  </div>
+</div>
+</body>
+</html>

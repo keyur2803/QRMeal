@@ -39,7 +39,6 @@ export async function sendOtpEmail(to: string, otp: string) {
         },
       }
     );
-    console.log(res,'llllll');
   } catch (error) {
     console.error("Promailer API Error (OTP):", error);
     throw new Error("Failed to send OTP email");

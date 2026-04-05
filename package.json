@@ -16,7 +16,7 @@
     "typecheck": "npx tsc -p services/api/tsconfig.json --noEmit && npx tsc -p apps/customer-web/tsconfig.json --noEmit && npx tsc -p apps/kitchen-web/tsconfig.json --noEmit && npx tsc -p apps/admin-web/tsconfig.json --noEmit",
     "build": "npm --workspace apps/customer-web run build && npm --workspace apps/kitchen-web run build && npm --workspace apps/admin-web run build",
     "verify": "npm run typecheck && npm run build",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

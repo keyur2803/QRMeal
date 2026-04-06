@@ -40,16 +40,19 @@ export default function WaiterApp() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderFilter, setOrderFilter] = useState<"All" | "Ready" | "Preparing">("All");
 
-  // Format currency
-  const fmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  // Format currency for product locale
+  const fmt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
   useEffect(() => {
     fetchTables().then(setTables).catch(console.error);
     fetchAdminMenu().then((items) => setMenuItems(items.filter(i => i.isAvailable))).catch(console.error);
     loadOrders();
-    // Poll orders every 10s if on orders view
+  }, []);
+
+  useEffect(() => {
+    if (activeView !== "orders") return;
     const iv = setInterval(() => {
-      if (activeView === "orders") loadOrders();
+      loadOrders();
     }, 10000);
     return () => clearInterval(iv);
   }, [activeView]);
@@ -107,8 +110,9 @@ export default function WaiterApp() {
       alert("Order placed successfully!");
       setActiveView("orders");
       loadOrders();
-    } catch (err: any) {
-      alert("Failed to place order: " + err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      alert("Failed to place order: " + message);
     } finally {
       setPosLoading(false);
     }
@@ -118,8 +122,9 @@ export default function WaiterApp() {
     try {
       await updateOrderStatus(orderId, "served", `WAITER (${user?.name})`);
       loadOrders();
-    } catch (err: any) {
-      alert("Failed up updating status: " + err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      alert("Failed updating status: " + message);
     }
   };
 
@@ -200,7 +205,13 @@ export default function WaiterApp() {
               const q = getQty(item.id);
               return (
                 <div key={item.id} style={{ backgroundColor: "#fff", borderRadius: 12, padding: 10, display: "flex", gap: 12, alignItems: "center", border: "1px solid #f1f5f9", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-                  <img src={item.imageUrl || ""} alt={item.name} style={{ width: 50, height: 50, borderRadius: 8, backgroundColor: "#f8fafc", objectFit: "cover" }} />
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.name} style={{ width: 50, height: 50, borderRadius: 8, backgroundColor: "#f8fafc", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: 50, height: 50, borderRadius: 8, backgroundColor: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                      🍽️
+                    </div>
+                  )}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, color: "#0f172a", fontSize: 14, marginBottom: 2 }}>{item.name}</div>
                     <div style={{ fontWeight: 600, color: "#64748b", fontSize: 13 }}>{fmt.format(item.price)}</div>
@@ -245,7 +256,7 @@ export default function WaiterApp() {
               {["All", "Ready", "Preparing"].map(tf => (
                 <button
                   key={tf}
-                  onClick={() => setOrderFilter(tf as any)}
+                  onClick={() => setOrderFilter(tf as "All" | "Ready" | "Preparing")}
                   style={{
                     paddingBottom: 12, fontSize: 14, fontWeight: 600, border: "none", background: "none", cursor: "pointer", position: "relative",
                     color: orderFilter === tf ? "#0d9488" : "#64748b"
@@ -284,7 +295,7 @@ export default function WaiterApp() {
                   
                   <div style={{ paddingLeft: 8, fontSize: 12, color: "#64748b", marginBottom: 16, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
                      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", backgroundColor: src.isWaiter ? "#9333ea" : "#3b82f6" }} /> 
-                     {o.orderCode} &middot; {new Date(o.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                     {src.text} &middot; {o.orderCode} &middot; {new Date(o.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </div>
                   
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16, paddingLeft: 8 }}>

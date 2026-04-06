@@ -90,11 +90,7 @@ function RouteLogin() {
   );
 }
 
-function AppLayout() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const activeOrder = loadActiveOrder();
-
+function AppLayout({ tableCode }: { tableCode: string }) {
   return (
     <CartProvider>
       <div
@@ -105,96 +101,6 @@ function AppLayout() {
           paddingBottom: 80,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 8,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => navigate("/menu")}
-            style={{
-              border: "none",
-              background: "none",
-              cursor: "pointer",
-              padding: 0,
-              fontWeight: 900,
-              color: "#0d9488",
-              letterSpacing: 3,
-            }}
-          >
-            QRMEAL
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {activeOrder && (
-              <button
-                type="button"
-                onClick={() => navigate(`/order/${activeOrder.id}`)}
-                style={{
-                  fontSize: 13,
-                  padding: "6px 10px",
-                  borderRadius: 10,
-                  border: "1px solid #e2e8f0",
-                  background: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                Order
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => navigate("/cart")}
-              style={{
-                fontSize: 13,
-                padding: "6px 10px",
-                borderRadius: 10,
-                border: "1px solid #e2e8f0",
-                background: "#fff",
-                cursor: "pointer",
-              }}
-            >
-              Cart
-            </button>
-            {user ? (
-              <button
-                type="button"
-                onClick={() => {
-                  logout();
-                  navigate("/menu", { replace: true });
-                }}
-                style={{
-                  fontSize: 13,
-                  padding: "6px 10px",
-                  borderRadius: 10,
-                  border: "1px solid #e2e8f0",
-                  background: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                Log out
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => navigate("/login")}
-                style={{
-                  fontSize: 13,
-                  padding: "6px 10px",
-                  borderRadius: 10,
-                  border: "1px solid #e2e8f0",
-                  background: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                Sign in
-              </button>
-            )}
-          </div>
-        </div>
         <Outlet />
       </div>
     </CartProvider>
@@ -202,8 +108,24 @@ function AppLayout() {
 }
 
 function RouteMenu({ tableCode }: { tableCode: string }) {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  return <Menu tableCode={tableCode} onViewCart={() => navigate("/cart")} />;
+  return (
+    <Menu
+      tableCode={tableCode}
+      user={user}
+      onViewCart={() => navigate("/cart")}
+      onViewHistory={() => {
+        const activeOrder = loadActiveOrder();
+        navigate(activeOrder ? `/order/${activeOrder.id}` : "/menu");
+      }}
+      onLogin={() => navigate("/login")}
+      onLogout={() => {
+        logout();
+        navigate("/menu", { replace: true });
+      }}
+    />
+  );
 }
 
 function RouteCart({ tableCode }: { tableCode: string }) {
@@ -296,7 +218,7 @@ export default function App() {
           />
           <Route path="/login" element={<RouteLogin />} />
 
-          <Route element={<AppLayout />}>
+          <Route element={<AppLayout tableCode={tableCode} />}>
             <Route path="/menu" element={<RouteMenu tableCode={tableCode} />} />
             <Route path="/cart" element={<RouteCart tableCode={tableCode} />} />
             <Route path="/order/:orderId" element={<RouteOrderStatus />} />

@@ -8,16 +8,22 @@ import { useCart } from "../context/CartContext";
 import { menuImageSrc } from "../lib/imageUrl";
 import { colors, radius, shadowSm } from "../styles/tokens";
 import type { MenuItem } from "../types/menu";
+import type { CustomerUser } from "../types/user";
+import BottomNavBar from "../components/BottomNavBar";
 import ItemDetails from "./ItemDetails";
 
 const FOOD_ICONS = ["\uD83C\uDF55", "\uD83C\uDF5C", "\uD83E\uDD57", "\uD83C\uDF56", "\uD83C\uDF36", "\uD83C\uDF79", "\uD83E\uDDC0"];
 
 type Props = {
   tableCode: string;
+  user: CustomerUser | null;
   onViewCart: () => void;
+  onViewHistory: () => void;
+  onLogin: () => void;
+  onLogout: () => void;
 };
 
-export default function Menu({ tableCode, onViewCart }: Props) {
+export default function Menu({ tableCode, user, onViewCart, onViewHistory, onLogin, onLogout }: Props) {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +31,8 @@ export default function Menu({ tableCode, onViewCart }: Props) {
   const [category, setCategory] = useState<string>("All");
   const { lines, setQty, addItem, itemCount, subtotal } = useCart();
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [activeTab, setActiveTab] = useState<"menu" | "cart" | "history" | "account">("menu");
+  const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,7 +91,7 @@ export default function Menu({ tableCode, onViewCart }: Props) {
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: colors.slate900 }}>Menu</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: colors.teal600, letterSpacing: 1 }}>QRMEAL</div>
           <div
             style={{
               fontSize: 12,
@@ -94,7 +102,7 @@ export default function Menu({ tableCode, onViewCart }: Props) {
               borderRadius: radius.full
             }}
           >
-            Table {tableCode}
+            Table {tableCode.replace(/^T-?/, "")}
           </div>
         </div>
 
@@ -158,7 +166,7 @@ export default function Menu({ tableCode, onViewCart }: Props) {
         </div>
       </div>
 
-      <div style={{ padding: "14px 16px 120px", background: colors.slate50, minHeight: 280 }}>
+      <div style={{ padding: "14px 16px 188px", background: colors.slate50, minHeight: 280 }}>
         {loading && <p style={{ color: colors.slate500 }}>Loading menu…</p>}
         {error && (
           <p style={{ color: "#b91c1c", background: "#fef2f2", padding: 12, borderRadius: radius.md }}>{error}</p>
@@ -225,36 +233,13 @@ export default function Menu({ tableCode, onViewCart }: Props) {
                   padding: 14,
                   display: "flex",
                   gap: 14,
+                  alignItems: "flex-start",
                   marginBottom: 10,
                   boxShadow: shadowSm,
                   cursor: "pointer",
                   WebkitTapHighlightColor: "transparent"
                 }}
               >
-                <div
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: radius.md,
-                    flexShrink: 0,
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 32,
-                    background: `linear-gradient(135deg, ${colors.teal50}, ${colors.teal100})`
-                  }}
-                >
-                  {menuImageSrc(item.imageUrl) ? (
-                    <img
-                      src={menuImageSrc(item.imageUrl)!}
-                      alt=""
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                  ) : (
-                    iconFor(idx)
-                  )}
-                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: colors.slate900, marginBottom: 3 }}>{item.name}</div>
                   {item.description && (
@@ -262,35 +247,110 @@ export default function Menu({ tableCode, onViewCart }: Props) {
                       {item.description}
                     </div>
                   )}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: colors.teal600 }}>₹{item.price.toFixed(0)}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: colors.teal600 }}>₹{item.price.toFixed(0)}</div>
+                </div>
+                <div style={{ width: 115, flexShrink: 0 }}>
+                  <div
+                    style={{
+                      width: 115,
+                      height: 133,
+                      position: "relative"
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 115,
+                        height: 115,
+                        borderRadius: radius.md,
+                        overflow: "hidden",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 32,
+                        background: `linear-gradient(135deg, ${colors.teal50}, ${colors.teal100})`
+                      }}
+                    >
+                      {menuImageSrc(item.imageUrl) ? (
+                        <img
+                          src={menuImageSrc(item.imageUrl)!}
+                          alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      ) : (
+                        iconFor(idx)
+                      )}
+                    </div>
                     {qty > 0 ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, background: colors.teal50, borderRadius: 10, padding: 4 }}>
+                      <div
+                        style={{
+                          width: 96,
+                          height: 36,
+                          position: "absolute",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          bottom: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 2,
+                          background: colors.teal50,
+                          borderRadius: 10,
+                          padding: "0 4px",
+                          boxSizing: "border-box",
+                          boxShadow: shadowSm
+                        }}
+                      >
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setQty(item.id, qty - 1); }}
                           style={{
-                            width: 28, height: 28, borderRadius: 8, border: "none",
-                            background: colors.teal600, color: colors.white, fontSize: 16, fontWeight: 700, cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                            width: 26,
+                            height: 26,
+                            borderRadius: 7,
+                            border: "none",
+                            background: colors.teal600,
+                            color: colors.white,
+                            fontSize: 16,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            lineHeight: 1
                           }}
-                        >-</button>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: colors.teal700, minWidth: 16, textAlign: "center" }}>{qty}</span>
+                        >
+                          -
+                        </button>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: colors.teal700, minWidth: 16, textAlign: "center" }}>
+                          {qty}
+                        </span>
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setQty(item.id, qty + 1); }}
                           style={{
-                            width: 28, height: 28, borderRadius: 8, border: "none",
-                            background: colors.teal600, color: colors.white, fontSize: 16, fontWeight: 700, cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                            width: 26,
+                            height: 26,
+                            borderRadius: 7,
+                            border: "none",
+                            background: colors.teal600,
+                            color: colors.white,
+                            fontSize: 16,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            lineHeight: 1
                           }}
-                        >+</button>
+                        >
+                          +
+                        </button>
                       </div>
                     ) : (
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); addItem(item); }}
                         style={{
+                          width: 96,
                           height: 36,
-                          width: 104,
+                          position: "absolute",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          bottom: 0,
                           borderRadius: 10,
                           border: "none",
                           background: colors.teal50,
@@ -301,7 +361,8 @@ export default function Menu({ tableCode, onViewCart }: Props) {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: 4
+                          gap: 4,
+                          boxShadow: shadowSm
                         }}
                         aria-label={`Add ${item.name}`}
                       >
@@ -317,6 +378,18 @@ export default function Menu({ tableCode, onViewCart }: Props) {
         )}
       </div>
 
+      <BottomNavBar
+        activeTab={activeTab}
+        accountOpen={accountOpen}
+        user={user}
+        onMenu={() => { setActiveTab("menu"); setAccountOpen(false); }}
+        onCart={() => { setActiveTab("cart"); setAccountOpen(false); onViewCart(); }}
+        onHistory={() => { setActiveTab("history"); setAccountOpen(false); onViewHistory(); }}
+        onToggleAccount={() => { setActiveTab("account"); setAccountOpen((open) => !open); }}
+        onLogin={() => { setAccountOpen(false); onLogin(); }}
+        onLogout={() => { setAccountOpen(false); onLogout(); }}
+      />
+
       {/* Float bar — design-system float-bar teal */}
       {itemCount > 0 && (
         <button
@@ -324,7 +397,7 @@ export default function Menu({ tableCode, onViewCart }: Props) {
           onClick={onViewCart}
           style={{
             position: "fixed",
-            bottom: 16,
+            bottom: 78,
             left: 16,
             right: 16,
             maxWidth: 480,

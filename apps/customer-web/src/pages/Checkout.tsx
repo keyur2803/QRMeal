@@ -6,7 +6,9 @@ import { useState } from "react";
 import { placeOrder, type PlacedOrder } from "../api/orders";
 import { useCart } from "../context/CartContext";
 import { menuImageSrc } from "../lib/imageUrl";
-import { colors, radius } from "../styles/tokens";
+import { Plus, Minus } from "lucide-react";
+import { colors, radius, shadowSm } from "../styles/tokens";
+import Header from "../components/Header";
 
 type Props = {
   tableCode: string;
@@ -46,47 +48,11 @@ export default function Checkout({ tableCode, customerName, onBack, onAddMore, o
   const itemCount = lines.reduce((s, l) => s + l.qty, 0);
 
   return (
-    <div style={{ margin: "0 -16px", background: colors.slate50, minHeight: "calc(100vh - 32px)" }}>
-      <div
-        style={{
-          background: colors.white,
-          padding: "14px 16px",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          borderBottom: `1px solid ${colors.slate100}`,
-          position: "sticky",
-          top: 0,
-          zIndex: 10
-        }}
-      >
-        <button
-          type="button"
-          onClick={onBack}
-          style={{
-            fontSize: 20,
-            cursor: "pointer",
-            color: colors.slate600,
-            background: "none",
-            border: "none",
-            padding: 0
-          }}
-          aria-label="Back"
-        >
-          ←
-        </button>
-        <div style={{ fontSize: 18, fontWeight: 700, flex: 1, color: colors.slate900 }}>Your Order</div>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          background: "#f0fdfa", border: "1px solid #5eead4",
-          borderRadius: 999, padding: "4px 10px", fontSize: 12, fontWeight: 600, color: "#0f766e"
-        }}>
-          🪑 {tableCode}
-        </div>
-      </div>
+    <div style={{ background: colors.slate50, minHeight: "calc(100vh - 32px)", display: "flex", flexDirection: "column" }}>
+      <Header title="Your Order" tableCode={tableCode} onBack={onBack} />
 
       <form onSubmit={handlePlaceOrder}>
-        <div style={{ padding: "16px 16px 120px" }}>
+        <div style={{ padding: "20px 16px 180px" }}>
           {lines.length === 0 ? (
             <div style={{ paddingTop: 24, color: colors.slate500, textAlign: "center" }}>Your cart is empty.</div>
           ) : (
@@ -94,15 +60,15 @@ export default function Checkout({ tableCode, customerName, onBack, onAddMore, o
               {lines.map((line) => (
                 <div
                   key={line.menuItemId}
-                  style={{
-                    background: colors.white,
-                    borderRadius: radius.lg,
-                    padding: 14,
-                    marginBottom: 10,
-                    display: "flex",
-                    gap: 12,
-                    boxShadow: shadowXs
-                  }}
+                    style={{
+                      background: colors.white,
+                      borderRadius: radius.lg,
+                      padding: 16,
+                      marginBottom: 12,
+                      display: "flex",
+                      gap: 16,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+                    }}
                 >
                   <div
                     style={{
@@ -139,16 +105,15 @@ export default function Checkout({ tableCode, customerName, onBack, onAddMore, o
                             borderRadius: radius.sm,
                             border: `1.5px solid ${colors.slate200}`,
                             background: colors.white,
-                            fontSize: 14,
-                            fontWeight: 700,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            color: colors.slate600
+                            color: colors.slate600,
+                            padding: 0
                           }}
                         >
-                          −
+                          <Minus size={14} strokeWidth={3} />
                         </button>
                         <span style={{ fontSize: 14, fontWeight: 800, minWidth: 16, textAlign: "center" }}>{line.qty}</span>
                         <button
@@ -160,16 +125,15 @@ export default function Checkout({ tableCode, customerName, onBack, onAddMore, o
                             borderRadius: radius.sm,
                             border: `1.5px solid ${colors.slate200}`,
                             background: colors.white,
-                            fontSize: 14,
-                            fontWeight: 700,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            color: colors.slate600
+                            color: colors.slate600,
+                            padding: 0
                           }}
                         >
-                          +
+                          <Plus size={14} strokeWidth={3} />
                         </button>
                       </div>
                     </div>
@@ -190,8 +154,8 @@ export default function Checkout({ tableCode, customerName, onBack, onAddMore, o
             margin: "0 auto",
             background: colors.white,
             borderRadius: `${radius.lg}px ${radius.lg}px 0 0`,
-            padding: "18px 16px 24px",
-            boxShadow: "0 -4px 20px rgba(0,0,0,0.06)",
+            padding: "24px 20px 32px",
+            boxShadow: "0 -8px 24px rgba(0,0,0,0.08)",
             borderTop: `1px solid ${colors.slate100}`
           }}
         >
@@ -226,13 +190,12 @@ export default function Checkout({ tableCode, customerName, onBack, onAddMore, o
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 22,
                 color: colors.teal600,
-                boxShadow: shadowXs,
+                boxShadow: shadowSm,
                 flexShrink: 0
               }}
             >
-              +
+              <Plus size={20} strokeWidth={3} />
             </div>
             <div style={{ textAlign: "left" }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: colors.teal700 }}>Add More Items</div>
@@ -240,13 +203,15 @@ export default function Checkout({ tableCode, customerName, onBack, onAddMore, o
             </div>
           </button>
 
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 14 }}>
-            <span style={{ color: colors.slate500 }}>Subtotal</span>
-            <span style={{ fontWeight: 700 }}>₹{subtotal.toFixed(0)}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, fontSize: 18, fontWeight: 800 }}>
-            <span style={{ color: colors.slate900 }}>Total</span>
-            <span style={{ color: colors.teal600 }}>₹{subtotal.toFixed(0)}</span>
+          <div style={{ paddingTop: 16, borderTop: `1px solid ${colors.slate100}`, marginTop: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14 }}>
+              <span style={{ color: colors.slate500 }}>Subtotal</span>
+              <span style={{ color: colors.slate900, fontWeight: 700 }}>₹{subtotal.toFixed(0)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, fontSize: 20 }}>
+              <span style={{ fontWeight: 800, color: colors.slate900 }}>Total Amount</span>
+              <span style={{ fontWeight: 900, color: colors.teal600 }}>₹{subtotal.toFixed(0)}</span>
+            </div>
           </div>
 
           <button

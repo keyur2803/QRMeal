@@ -97,7 +97,6 @@ function AppLayout({ tableCode }: { tableCode: string }) {
         style={{
           maxWidth: 480,
           margin: "0 auto",
-          padding: 16,
           paddingBottom: 80,
         }}
       >

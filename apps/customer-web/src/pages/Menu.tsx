@@ -9,7 +9,11 @@ import { menuImageSrc } from "../lib/imageUrl";
 import { colors, radius, shadowSm } from "../styles/tokens";
 import type { MenuItem } from "../types/menu";
 import type { CustomerUser } from "../types/user";
+import { Plus, Minus } from "lucide-react";
 import BottomNavBar from "../components/BottomNavBar";
+import Header from "../components/Header";
+import SearchBar from "../components/SearchBar";
+import CategoryTabs from "../components/CategoryTabs";
 import ItemDetails from "./ItemDetails";
 
 const FOOD_ICONS = ["\uD83C\uDF55", "\uD83C\uDF5C", "\uD83E\uDD57", "\uD83C\uDF56", "\uD83C\uDF36", "\uD83C\uDF79", "\uD83E\uDDC0"];
@@ -73,100 +77,39 @@ export default function Menu({ tableCode, user, onViewCart, onViewHistory, onLog
     return FOOD_ICONS[index % FOOD_ICONS.length];
   }
 
-  if (selectedItem) {
-    return <ItemDetails item={selectedItem} onBack={() => setSelectedItem(null)} onViewCart={onViewCart} />;
-  }
+  // Removed early return for ItemDetails to allow it to render as an overlay
 
   return (
-    <div style={{ margin: "0 -16px" }}>
-      {/* Sticky header */}
+    <div>
+      {/* Sticky top section */}
       <div
         style={{
-          position: "sticky",
+          position: "fixed",
           top: 0,
-          zIndex: 10,
+          left: 0,
+          right: 0,
+          zIndex: 12,
+          width: "100%",
+          maxWidth: 480,
+          margin: "0 auto",
           background: colors.white,
-          padding: "12px 16px 0",
-          borderBottom: `1px solid ${colors.slate100}`
+          borderBottom: `1px solid ${colors.slate100}`,
+          minHeight: 166,
+          boxSizing: "border-box",
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden"
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: colors.teal600, letterSpacing: 1 }}>QRMEAL</div>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: colors.teal600,
-              background: colors.teal50,
-              padding: "6px 14px",
-              borderRadius: radius.full
-            }}
-          >
-            Table {tableCode.replace(/^T-?/, "")}
+        <Header tableCode={tableCode} sticky={false} />
+        <div style={{ padding: "0 16px 14px" }}>
+          <div style={{ marginBottom: 12 }}>
+            <SearchBar value={search} onChange={setSearch} />
           </div>
-        </div>
-
-        <div style={{ marginBottom: 14 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: colors.slate100,
-              borderRadius: radius.md,
-              padding: "12px 16px"
-            }}
-          >
-            <span style={{ color: colors.slate400, fontSize: 16 }} aria-hidden>
-              &#128269;
-            </span>
-            <input
-              type="search"
-              placeholder="Search dishes, drinks..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                flex: 1,
-                border: "none",
-                background: "transparent",
-                fontSize: 14,
-                outline: "none",
-                color: colors.slate700
-              }}
-            />
-          </div>
-        </div>
-
-        <div style={{ paddingBottom: 14, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <div style={{ display: "flex", gap: 6, minWidth: "min-content" }}>
-            {categories.map((cat) => {
-              const active = category === cat;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(cat)}
-                  style={{
-                    padding: "8px 18px",
-                    borderRadius: radius.full,
-                    fontSize: 13,
-                    fontWeight: 500,
-                    whiteSpace: "nowrap",
-                    border: "none",
-                    cursor: "pointer",
-                    background: active ? colors.teal600 : colors.slate100,
-                    color: active ? colors.white : colors.slate600
-                  }}
-                >
-                  {cat === "Popular" ? "\u2B50 Popular" : cat}
-                </button>
-              );
-            })}
-          </div>
+          <CategoryTabs categories={categories} activeCategory={category} onSelect={setCategory} />
         </div>
       </div>
 
-      <div style={{ padding: "14px 16px 188px", background: colors.slate50, minHeight: 280 }}>
+      <div style={{ padding: "180px 16px 188px", background: colors.slate50, minHeight: 280 }}>
         {loading && <p style={{ color: colors.slate500 }}>Loading menu…</p>}
         {error && (
           <p style={{ color: "#b91c1c", background: "#fef2f2", padding: 12, borderRadius: radius.md }}>{error}</p>
@@ -304,19 +247,20 @@ export default function Menu({ tableCode, user, onViewCart, onViewHistory, onLog
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setQty(item.id, qty - 1); }}
                           style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: 7,
+                            width: 28,
+                            height: 28,
+                            borderRadius: radius.sm,
                             border: "none",
                             background: colors.teal600,
                             color: colors.white,
-                            fontSize: 16,
-                            fontWeight: 700,
                             cursor: "pointer",
-                            lineHeight: 1
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: 0
                           }}
                         >
-                          -
+                          <Minus size={14} strokeWidth={3} />
                         </button>
                         <span style={{ fontSize: 14, fontWeight: 700, color: colors.teal700, minWidth: 16, textAlign: "center" }}>
                           {qty}
@@ -325,19 +269,20 @@ export default function Menu({ tableCode, user, onViewCart, onViewHistory, onLog
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setQty(item.id, qty + 1); }}
                           style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: 7,
+                            width: 28,
+                            height: 28,
+                            borderRadius: radius.sm,
                             border: "none",
                             background: colors.teal600,
                             color: colors.white,
-                            fontSize: 16,
-                            fontWeight: 700,
                             cursor: "pointer",
-                            lineHeight: 1
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: 0
                           }}
                         >
-                          +
+                          <Plus size={14} strokeWidth={3} />
                         </button>
                       </div>
                     ) : (
@@ -361,12 +306,12 @@ export default function Menu({ tableCode, user, onViewCart, onViewHistory, onLog
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: 4,
+                          gap: 6,
                           boxShadow: shadowSm
                         }}
                         aria-label={`Add ${item.name}`}
                       >
-                        ADD <span style={{ fontSize: 16 }}>+</span>
+                        ADD <Plus size={14} strokeWidth={3} />
                       </button>
                     )}
                   </div>
@@ -433,6 +378,14 @@ export default function Menu({ tableCode, user, onViewCart, onViewHistory, onLog
           </span>
           <span style={{ fontWeight: 700 }}>₹{subtotal.toFixed(0)}</span>
         </button>
+      )}
+      {/* Item Details Overlay */}
+      {selectedItem && (
+        <ItemDetails
+          item={selectedItem}
+          onBack={() => setSelectedItem(null)}
+          onViewCart={onViewCart}
+        />
       )}
     </div>
   );

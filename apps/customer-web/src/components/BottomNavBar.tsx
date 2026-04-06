@@ -1,3 +1,4 @@
+import { Utensils, ShoppingCart, ReceiptText, User } from "lucide-react";
 import { colors, radius } from "../styles/tokens";
 import type { CustomerUser } from "../types/user";
 
@@ -47,33 +48,33 @@ export default function BottomNavBar({
           <button
             type="button"
             onClick={onMenu}
-            style={{ border: "none", background: "transparent", padding: "8px 0", color: activeTab === "menu" ? colors.teal600 : colors.slate500, fontSize: 12, fontWeight: activeTab === "menu" ? 700 : 600, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}
+            style={{ border: "none", background: "transparent", padding: "8px 0", color: activeTab === "menu" ? colors.teal600 : colors.slate500, fontSize: 11, fontWeight: activeTab === "menu" ? 700 : 500, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
           >
-            <span style={{ fontSize: 17 }}>🍽️</span>
+            <Utensils size={activeTab === "menu" ? 20 : 18} strokeWidth={activeTab === "menu" ? 2.5 : 2} />
             Menu
           </button>
           <button
             type="button"
             onClick={onCart}
-            style={{ border: "none", background: "transparent", padding: "8px 0", color: activeTab === "cart" ? colors.teal600 : colors.slate500, fontSize: 12, fontWeight: activeTab === "cart" ? 700 : 600, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}
+            style={{ border: "none", background: "transparent", padding: "8px 0", color: activeTab === "cart" ? colors.teal600 : colors.slate500, fontSize: 11, fontWeight: activeTab === "cart" ? 700 : 500, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
           >
-            <span style={{ fontSize: 17 }}>🛒</span>
+            <ShoppingCart size={activeTab === "cart" ? 20 : 18} strokeWidth={activeTab === "cart" ? 2.5 : 2} />
             Cart
           </button>
           <button
             type="button"
             onClick={onHistory}
-            style={{ border: "none", background: "transparent", padding: "8px 0", color: activeTab === "history" ? colors.teal600 : colors.slate500, fontSize: 12, fontWeight: activeTab === "history" ? 700 : 600, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}
+            style={{ border: "none", background: "transparent", padding: "8px 0", color: activeTab === "history" ? colors.teal600 : colors.slate500, fontSize: 11, fontWeight: activeTab === "history" ? 700 : 500, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
           >
-            <span style={{ fontSize: 17 }}>🧾</span>
+            <ReceiptText size={activeTab === "history" ? 20 : 18} strokeWidth={activeTab === "history" ? 2.5 : 2} />
             History
           </button>
           <button
             type="button"
             onClick={onToggleAccount}
-            style={{ border: "none", background: "transparent", padding: "8px 0", color: activeTab === "account" ? colors.teal600 : colors.slate500, fontSize: 12, fontWeight: activeTab === "account" ? 700 : 600, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}
+            style={{ border: "none", background: "transparent", padding: "8px 0", color: activeTab === "account" ? colors.teal600 : colors.slate500, fontSize: 11, fontWeight: activeTab === "account" ? 700 : 500, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
           >
-            <span style={{ fontSize: 17 }}>👤</span>
+            <User size={activeTab === "account" ? 20 : 18} strokeWidth={activeTab === "account" ? 2.5 : 2} />
             Account
           </button>
         </div>

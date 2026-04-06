@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchOrders, type OrderDto } from "../api/orders";
 import { colors, radius } from "../styles/tokens";
+import Header from "../components/Header";
 
 type Props = {
   orderId: string;
@@ -192,53 +193,11 @@ export default function OrderStatus({
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setShowHero(true)}
-          style={{
-            width: "100%",
-            background: `linear-gradient(145deg, ${colors.teal500}, ${colors.teal600}, ${colors.teal700})`,
-            padding: "12px 16px 16px",
-            color: colors.white,
-            border: "none",
-            textAlign: "left",
-            cursor: "pointer",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 900 }}>Order Status</div>
-            <div
-              style={{
-                fontSize: 12,
-                opacity: 0.85,
-                background: "rgba(255,255,255,0.15)",
-                padding: "4px 10px",
-                borderRadius: radius.full,
-              }}
-            >
-              #{order?.orderCode ?? orderCode}
-            </div>
-          </div>
-          <div
-            style={{
-              marginTop: 8,
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <span style={{ fontSize: 22 }} aria-hidden>
-              {hero.emoji}
-            </span>
-            <div style={{ fontSize: 14, fontWeight: 800 }}>{hero.title}</div>
-          </div>
-        </button>
+        <Header 
+          title="Order Status" 
+          tableCode={order?.orderCode ?? orderCode} 
+          onBack={onBrowseMenu} 
+        />
       )}
 
       <div style={{ padding: "0 16px 24px", marginTop: showHero ? -24 : 0 }}>
